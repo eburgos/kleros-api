@@ -276,6 +276,7 @@ class KlerosWrapper extends ContractWrapper {
     disputeId,
     ruling,
     votes,
+    hash,
     account = this._Web3Wrapper.getAccount(0)
   ) =&gt; {
     const contractInstance = await this.load(contractAddress)
@@ -484,8 +485,8 @@ class KlerosWrapper extends ContractWrapper {
   * @return {number} int indicating the ruling of the dispute
   */
   currentRulingForDispute = async (
-    contractAddress,
     disputeId,
+    contractAddress,
   ) =&gt; {
     const contractInstance = await this.load(contractAddress)
 

@@ -141,7 +141,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDataForDispute">getDataForDispute</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>: <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDataForDispute">getDataForDispute</a></span></span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>: <span>*</span></span>
         </p>
       </div>
       <div>
@@ -199,7 +199,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDisputesForJuror">getDisputesForJuror</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span>int</span><span>[]</span></span>: <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDisputeContractsForJuror">getDisputeContractsForJuror</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span><span>[]</span></span>: <span>*</span></span>
         </p>
       </div>
       <div>
@@ -286,7 +286,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getUserDisputeFromStore">getUserDisputeFromStore</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">object</a></span>: <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getUserDisputeFromStore">getUserDisputeFromStore</a></span></span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">object</a></span>: <span>*</span></span>
         </p>
       </div>
       <div>
@@ -315,7 +315,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getVotesForJuror">getVotesForJuror</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>: <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getVotesForJuror">getVotesForJuror</a></span></span><span class="code" data-ice="signature">(disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>: <span>*</span></span>
         </p>
       </div>
       <div>
@@ -402,71 +402,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-stopWatchingForDisputes">stopWatchingForDisputes</a></span></span><span class="code" data-ice="signature">: <span>*</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-submitVotesForDispute">submitVotesForDispute</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, ruling: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, votes: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>: <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-submitVotesForDispute">submitVotesForDispute</a></span></span><span class="code" data-ice="signature">(contractAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, ruling: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, votes: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>: <span>*</span></span>
         </p>
       </div>
       <div>
         
         
         <div data-ice="description"><p>Submit votes.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-watchForDisputes">watchForDisputes</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>If there is a dispute in contract update store
-FIXME contracts with multiple disputes will need a way to clarify that this is a new dispute</p>
 </div>
       </div>
     </td>
@@ -495,13 +437,14 @@ FIXME contracts with multiple disputes will need a way to clarify that this is a
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_disputeWatchers">_disputeWatchers</a></span></span><span class="code" data-ice="signature">: {}</span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_storeNewDispute">_storeNewDispute</a></span></span><span class="code" data-ice="signature">(contractAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
         </p>
       </div>
       <div>
         
         
-        
+        <div data-ice="description"><p>If there is a dispute in contract update store</p>
+</div>
       </div>
     </td>
     <td>
@@ -523,7 +466,7 @@ FIXME contracts with multiple disputes will need a way to clarify that this is a
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_updateStoreForDispute">_updateStoreForDispute</a></span></span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, jurorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_updateStoreForDispute">_updateStoreForDispute</a></span></span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, jurorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
         </p>
       </div>
       <div>
@@ -930,11 +873,11 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     
     
     
-    <span class="code" data-ice="name">getDataForDispute</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>: <span>*</span></span>
+    <span class="code" data-ice="name">getDataForDispute</span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>: <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber441">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber411">source</a></span></span>
     </span>
   </h3>
 
@@ -991,7 +934,7 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber302">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber280">source</a></span></span>
     </span>
   </h3>
 
@@ -1037,18 +980,18 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-member-getDisputesForJuror">
+  <h3 data-ice="anchor" id="instance-member-getDisputeContractsForJuror">
     <span class="access" data-ice="access">public</span>
     
     
     
     
     
-    <span class="code" data-ice="name">getDisputesForJuror</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span>int</span><span>[]</span></span>: <span>*</span></span>
+    <span class="code" data-ice="name">getDisputeContractsForJuror</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span><span>[]</span></span>: <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber184">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber163">source</a></span></span>
     </span>
   </h3>
 
@@ -1068,8 +1011,8 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <table>
       <tbody>
         <tr>
-          <td class="return-type code" data-ice="returnType"><span><span>int</span><span>[]</span></span></td>
-          <td class="return-desc" data-ice="returnDescription"><p>array of dispute id&apos;s</p>
+          <td class="return-type code" data-ice="returnType"><span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span><span>[]</span></span></td>
+          <td class="return-desc" data-ice="returnDescription"><p>array of contract addresses</p>
 </td>
         </tr>
       </tbody>
@@ -1105,7 +1048,7 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber130">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber109">source</a></span></span>
     </span>
   </h3>
 
@@ -1162,7 +1105,7 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber413">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber384">source</a></span></span>
     </span>
   </h3>
 
@@ -1215,11 +1158,11 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     
     
     
-    <span class="code" data-ice="name">getUserDisputeFromStore</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">object</a></span>: <span>*</span></span>
+    <span class="code" data-ice="name">getUserDisputeFromStore</span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">object</a></span>: <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber391">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber362">source</a></span></span>
     </span>
   </h3>
 
@@ -1272,11 +1215,11 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     
     
     
-    <span class="code" data-ice="name">getVotesForJuror</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>: <span>*</span></span>
+    <span class="code" data-ice="name">getVotesForJuror</span><span class="code" data-ice="signature">(disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>: <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber235">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber214">source</a></span></span>
     </span>
   </h3>
 
@@ -1333,7 +1276,7 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber77">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber31">source</a></span></span>
     </span>
   </h3>
 
@@ -1390,7 +1333,7 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber106">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber63">source</a></span></span>
     </span>
   </h3>
 
@@ -1436,49 +1379,6 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-member-stopWatchingForDisputes">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">stopWatchingForDisputes</span><span class="code" data-ice="signature">: <span>*</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber66">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-member-submitVotesForDispute">
     <span class="access" data-ice="access">public</span>
     
@@ -1486,11 +1386,11 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
     
     
     
-    <span class="code" data-ice="name">submitVotesForDispute</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, ruling: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, votes: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>: <span>*</span></span>
+    <span class="code" data-ice="name">submitVotesForDispute</span><span class="code" data-ice="signature">(contractAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, ruling: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span>, votes: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span><span>[]</span></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>: <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber262">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber241">source</a></span></span>
     </span>
   </h3>
 
@@ -1535,73 +1435,29 @@ throws an error if Arbitrator and Arbitable contract wrappers are not set yet</p
   
   
 </div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-member-watchForDisputes">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">watchForDisputes</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber31">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>If there is a dispute in contract update store
-FIXME contracts with multiple disputes will need a way to clarify that this is a new dispute</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
 <h2 data-ice="title">Private Members</h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-member-_disputeWatchers">
+  <h3 data-ice="anchor" id="instance-member-_storeNewDispute">
     <span class="access" data-ice="access">private</span>
     
     
     
     
     
-    <span class="code" data-ice="name">_disputeWatchers</span><span class="code" data-ice="signature">: {}</span>
+    <span class="code" data-ice="name">_storeNewDispute</span><span class="code" data-ice="signature">(contractAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, account: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber22">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber89">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  
+  <div data-ice="description"><p>If there is a dispute in contract update store</p>
+</div>
 
   
 
@@ -1633,11 +1489,11 @@ FIXME contracts with multiple disputes will need a way to clarify that this is a
     
     
     
-    <span class="code" data-ice="name">_updateStoreForDispute</span><span class="code" data-ice="signature">(arbitratorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, disputeId: <span>int</span>, jurorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
+    <span class="code" data-ice="name">_updateStoreForDispute</span><span class="code" data-ice="signature">(arbitrableContract: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, jurorAddress: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber324">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/abstractWrappers/Disputes.js.html#lineNumber301">source</a></span></span>
     </span>
   </h3>
 

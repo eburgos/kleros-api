@@ -67,52 +67,6 @@ class Disputes extends AbstractWrapper {
    */
   constructor(storeProvider, arbitratorWrapper, arbitrableWrapper) {
     super(storeProvider, arbitratorWrapper, arbitrableWrapper)
-    this._disputeWatchers = {}
-    this.disputeWatcher
-  }
-
-  /**
-  * If there is a dispute in contract update store
-  * FIXME contracts with multiple disputes will need a way to clarify that this is a new dispute
-  * @param {string} arbitratorAddress
-  */
-  watchForDisputes = async (
-    arbitratorAddress,
-  ) =&gt; {
-    this._checkArbitratorWrappersSet()
-
-    const lastBlock = await this._StoreProvider.getLastBlock(arbitratorAddress)
-    const currentBlock = this._Arbitrator._getCurrentBlockNumber()
-    const contractInstance = await this._loadArbitratorInstance(arbitratorAddress)
-    this.disputeWatcher = contractInstance.DisputeCreation({}, {fromBlock: lastBlock, toBlock: &apos;latest&apos;})
-
-    if (lastBlock &lt; currentBlock) {
-      // FETCH DISPUTES WE MIGHT HAVE MISSED
-      this.disputeWatcher.get((error, eventResult) =&gt; {
-        if (!error) {
-          eventResult.map(event =&gt; {
-            // add new dispute to store
-            this._updateStoreForDispute(arbitratorAddress, event.args._disputeID)
-          })
-
-          this._StoreProvider.updateLastBlock(arbitratorAddress, currentBlock)
-        }
-      })
-    }
-
-    // WATCH FOR NEW DISPUTES
-    this.disputeWatcher.watch((error, result) =&gt; {
-      if (!error) {
-        const disputeId = result.args._disputeID
-        this._updateStoreForDispute(arbitratorAddress, disputeId)
-
-        this._StoreProvider.updateLastBlock(arbitratorAddress, result.blockNumber)
-      }
-    })
-  }
-
-  stopWatchingForDisputes = () =&gt; {
-    this.disputeWatcher.stopWatching()
   }
 
   /**
@@ -137,6 +91,9 @@ class Disputes extends AbstractWrapper {
       )
 
       if (!txHash) throw new Error(&apos;unable to pay arbitration fee for party A&apos;)
+
+      // update store if there is a dispute
+      await this._storeNewDispute(arbitrableContractAddress, account)
 
       return txHash
     } catch (e) {
@@ -166,7 +123,29 @@ class Disputes extends AbstractWrapper {
 
     if (!txHash) throw new Error(&apos;unable to pay arbitration fee for party B&apos;)
 
+    // update store if there is a dispute
+    await this._storeNewDispute(arbitrableContractAddress)
+
     return txHash
+  }
+
+  /**
+  * If there is a dispute in contract update store
+  * @param {string} contractAddress
+  * @param {string} account
+  */
+  _storeNewDispute = async (
+    arbitrableContractAddress,
+    account
+  ) =&gt; {
+    this._checkArbitratorWrappersSet()
+    this._checkArbitrableWrappersSet()
+
+    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)
+
+    if (arbitrableContractData.status === DISPUTE_STATUS) {
+      await this._updateStoreForDispute(arbitrableContractAddress, account)
+    }
   }
 
   /**
@@ -195,7 +174,7 @@ class Disputes extends AbstractWrapper {
     if (period !== VOTING_PERIOD) {
       let disputes = await this._StoreProvider.getDisputesForUser(account)
       disputes = await Promise.all(disputes.map(async (dispute) =&gt; {
-        return await this.getDataForDispute(dispute.arbitratorAddress, dispute.disputeId, account)
+        return await this.getDataForDispute(dispute.contractAddress, account)
       }))
 
       return disputes
@@ -203,10 +182,10 @@ class Disputes extends AbstractWrapper {
 
     if (currentSession != profile.session) {
       // get disputes for juror
-      const myDisputeIds = await this.getDisputesForJuror(arbitratorAddress, account)
+      const myDisputeContracts = await this.getDisputeContractsForJuror(arbitratorAddress, account)
       // update store for each dispute
-      await Promise.all(myDisputeIds.map(async disputeId =&gt; {
-        await this._updateStoreForDispute(arbitratorAddress, disputeId, account)
+      await Promise.all(myDisputeContracts.map(async contractAddress =&gt; {
+        await this._updateStoreForDispute(contractAddress, account)
       }))
 
       // update session on profile
@@ -217,7 +196,7 @@ class Disputes extends AbstractWrapper {
     // return array of all disputes for user
     let disputes = await this._StoreProvider.getDisputesForUser(account)
     disputes = await Promise.all(disputes.map(async (dispute) =&gt; {
-      return await this.getDataForDispute(dispute.arbitratorAddress, dispute.disputeId, account)
+      return await this.getDataForDispute(dispute.contractAddress, account)
     }))
 
     return disputes
@@ -227,9 +206,9 @@ class Disputes extends AbstractWrapper {
    * Get disputes from Kleros contract
    * @param {string} arbitratorAddress address of Kleros contract
    * @param {string} account address of user
-   * @return {int[]} array of dispute id&apos;s
+   * @return {string[]} array of contract addresses
    */
-  getDisputesForJuror = async (
+  getDisputeContractsForJuror = async (
     arbitratorAddress,
     account,
   ) =&gt; {
@@ -256,10 +235,10 @@ class Disputes extends AbstractWrapper {
            continue
          }
 
-         const votes = await this.getVotesForJuror(arbitratorAddress, disputeId, account)
+         const votes = await this.getVotesForJuror(disputeId, arbitratorAddress, account)
          if (votes.length &gt; 0) {
            myDisputes.push(
-             disputeId
+             dispute.arbitratedContract
            )
          }
          // check next dispute
@@ -275,14 +254,14 @@ class Disputes extends AbstractWrapper {
 
   /**
   * Fetch the votes a juror has in a dispute
-  * @param {string} arbitratorAddress address of the arbitrator contract
   * @param {number} disputeId id of the dispute
+  * @param {string} arbitratorAddress address of the arbitrator contract
   * @param {string} account potential jurors address
   * @return {number[]} array of integers indicating the draw
   */
   getVotesForJuror = async (
-    arbitratorAddress,
     disputeId,
+    arbitratorAddress,
     account
   ) =&gt; {
     const numberOfJurors = await this._Arbitrator.getAmountOfJurorsForDispute(arbitratorAddress, disputeId)
@@ -300,7 +279,7 @@ class Disputes extends AbstractWrapper {
 
   /**
    * Submit votes. Note can only be called during Voting period (Period 2)
-   * @param {string} arbitratorAddress address of KlerosPOC contract
+   * @param {string} contractAddress address of KlerosPOC contract
    * @param {number} disputeId index of the dispute
    * @param {number} ruling int representing the jurors decision
    * @param {number[]} votes int[] of drawn votes for dispute
@@ -312,6 +291,7 @@ class Disputes extends AbstractWrapper {
     disputeId,
     ruling,
     votes,
+    hash,
     account
   ) =&gt; {
     const txHash = await this._Arbitrator.submitVotes(
@@ -319,18 +299,16 @@ class Disputes extends AbstractWrapper {
       disputeId,
       ruling,
       votes,
+      hash,
       account
     )
 
     if (txHash) {
-      // FIXME don&apos;t like having to fetch data just to get the arbitratedContract
-      const disputeData = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)
       // mark in store that you have ruled on dispute
       await this._StoreProvider.updateDisputeProfile(
         account,
         votes,
-        arbitratorAddress,
-        disputeId,
+        hash,
         true,
         true
       )
@@ -365,26 +343,23 @@ class Disputes extends AbstractWrapper {
 
   /**
   * update store with new dispute data
-  * @param {string} arbitratorAddress Address address of arbitrator contract
-  * @param {int} disputeId index of dispute
+  * @param {string} arbitrableContract Address address of arbitrable contract
   * @param {string} jurorAddress &lt;optional&gt; address of juror
   */
   _updateStoreForDispute = async (
-    arbitratorAddress,
-    disputeId,
+    arbitrableContractAddress,
     jurorAddress
   ) =&gt; {
     const disputeData = await this.getDataForDispute(
-      arbitratorAddress,
-      disputeId,
+      arbitrableContractAddress,
       jurorAddress
     )
 
     // update dispute
     await this._StoreProvider.updateDispute(
       disputeData.disputeId,
-      disputeData.arbitratorAddress,
       disputeData.hash,
+      disputeData.arbitrableContractAddress,
       disputeData.partyA,
       disputeData.partyB,
       disputeData.title,
@@ -400,8 +375,7 @@ class Disputes extends AbstractWrapper {
     await this._StoreProvider.updateDisputeProfile(
       disputeData.partyA,
       [],
-      disputeData.arbitratorAddress,
-      disputeData.disputeId,
+      disputeData.hash,
       false,
       false
     )
@@ -410,8 +384,7 @@ class Disputes extends AbstractWrapper {
     await this._StoreProvider.updateDisputeProfile(
       disputeData.partyB,
       [],
-      disputeData.arbitratorAddress,
-      disputeData.disputeId,
+      disputeData.hash,
       false,
       false
     )
@@ -421,8 +394,7 @@ class Disputes extends AbstractWrapper {
       await this._StoreProvider.updateDisputeProfile(
         jurorAddress,
         disputeData.votes,
-        disputeData.arbitratorAddress,
-        disputeData.disputeId,
+        disputeData.hash,
         disputeData.votes.length &gt; 0 ? true : false,
         false
       )
@@ -431,20 +403,19 @@ class Disputes extends AbstractWrapper {
 
   /**
   * get user data for a dispute from the store
-  * @param {string} arbitratorAddress address for arbitrator contract
-  * @param {int} disputeId index of dispute
-  * @param {string} account jurors address
+  * @param {string} arbitrableContract Address address for arbitrable contract
+  * @param {string} account &lt;optional&gt; jurors address
   * @return {object} dispute data from store for user
   */
   getUserDisputeFromStore = async (
-    arbitratorAddress,
-    disputeId,
+    arbitrableContractAddress,
     account
   ) =&gt; {
     const userProfile = await this._StoreProvider.getUserProfile(account)
 
     const disputeArray = _.filter(userProfile.disputes, (dispute) =&gt; {
-      return (dispute.disputeId === disputeId &amp;&amp; dispute.arbitratorAddress == arbitratorAddress)
+      // FIXME update store to use arbitrableContractAddress instead of hash
+      return dispute.hash === arbitrableContractAddress
     })
 
     if (_.isEmpty(disputeArray)) throw new Error(`User ${account} does not have store data for dispute`)
@@ -481,39 +452,35 @@ class Disputes extends AbstractWrapper {
 
   /**
   * get data for a dispute
-  * @param {string} arbitratorAddress Address address for arbitrator contract
-  * @param {int} disputeId index of dispute
+  * @param {string} arbitrableContract Address address for arbitrable contract
   * @param {string} account &lt;optional&gt; jurors address
   * @return {Object} data object for dispute that uses data from the contract and store
   */
   getDataForDispute = async (
-    arbitratorAddress,
-    disputeId,
+    arbitrableContractAddress,
     account
   ) =&gt; {
     this._checkArbitratorWrappersSet()
     this._checkArbitrableWrappersSet()
 
-    // FIXME should we just return what we have in the store?
-    const dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)
-    if (!dispute) {
-      throw new Error(`Dispute with arbitrator: ${arbitratorAddress} and disputeId: ${disputeId} does not exist`)
-    }
-    const arbitrableContractAddress = dispute.arbitratedContract
-
     const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)
+    const arbitratorAddress = arbitrableContractData.arbitrator
     const constractStoreData = await this._StoreProvider.getContractByAddress(
       arbitrableContractData.partyA,
       arbitrableContractAddress
     )
 
+    const disputeId = arbitrableContractData.disputeId
+    if (disputeId === undefined) throw new Error(`Arbitrable contract ${arbitrableContractAddress} does not have a dispute`)
+    const dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)
+
     let votes = []
     let isJuror = false
     let hasRuled = false
     if (account) {
-      votes = await this.getVotesForJuror(arbitratorAddress, disputeId, account)
+      votes = await this.getVotesForJuror(disputeId, arbitratorAddress, account)
       try {
-        const userData = await this.getUserDisputeFromStore(arbitratorAddress, disputeId, account)
+        const userData = await this.getUserDisputeFromStore(arbitrableContractAddress, account)
         isJuror = userData.isJuror
         hasRuled = userData.hasRuled
       } catch (e) {
@@ -529,7 +496,7 @@ class Disputes extends AbstractWrapper {
     const deadline = await this.getDeadlineForDispute(arbitratorAddress)
 
     // get ruling
-    const ruling = await this._Arbitrator.currentRulingForDispute(arbitratorAddress, disputeId)
+    const ruling = await this._Arbitrator.currentRulingForDispute(disputeId, arbitratorAddress)
 
     return ({
       // FIXME hash not being stored in contract atm

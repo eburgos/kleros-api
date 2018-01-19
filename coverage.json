@@ -1,6 +1,6 @@
 {
-  "coverage": "66.94%",
-  "expectCount": 118,
+  "coverage": "69.91%",
+  "expectCount": 113,
   "actualCount": 79,
   "files": {
     "src/abstractWrappers/AbstractWrapper.js": {
@@ -14,11 +14,9 @@
       ]
     },
     "src/abstractWrappers/ArbitrableContract.js": {
-      "expectCount": 7,
+      "expectCount": 6,
       "actualCount": 6,
-      "undocumentLines": [
-        150
-      ]
+      "undocumentLines": []
     },
     "src/abstractWrappers/Arbitrator.js": {
       "expectCount": 8,
@@ -31,13 +29,9 @@
       ]
     },
     "src/abstractWrappers/Disputes.js": {
-      "expectCount": 17,
+      "expectCount": 14,
       "actualCount": 14,
-      "undocumentLines": [
-        22,
-        39,
-        66
-      ]
+      "undocumentLines": []
     },
     "src/contractWrappers/ArbitrableTransactionWrapper.js": {
       "expectCount": 10,
@@ -64,11 +58,10 @@
       ]
     },
     "src/contractWrappers/ContractWrapper.js": {
-      "expectCount": 6,
+      "expectCount": 5,
       "actualCount": 4,
       "undocumentLines": [
-        14,
-        83
+        14
       ]
     },
     "src/contractWrappers/KlerosWrapper.js": {
@@ -77,8 +70,8 @@
       "undocumentLines": [
         22,
         24,
-        449,
-        459
+        450,
+        460
       ]
     },
     "src/contractWrappers/PinakionWrapper.js": {

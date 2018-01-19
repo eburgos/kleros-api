@@ -108,7 +108,7 @@ class ContractWrapper {
 
     const MyContract = contract({
       abi: artifact.abi,
-      unlinked_binary: artifact.bytecode ? artifact.bytecode : artifact.unlinked_binary
+      unlinked_binary: artifact.unlinked_binary,
     })
 
     const provider = await this._Web3Wrapper.getProvider()
@@ -126,10 +126,6 @@ class ContractWrapper {
     } catch (e) {
       throw new Error(e)
     }
-  }
-
-  _getCurrentBlockNumber = () =&gt; {
-    return this._Web3Wrapper.blockNumber()
   }
 }
 

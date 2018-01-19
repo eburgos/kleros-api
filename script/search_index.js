@@ -444,12 +444,6 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/abstractwrappers/arbitrablecontract.js~arbitrablecontract#getarbitrator",
-    "class/src/abstractWrappers/ArbitrableContract.js~ArbitrableContract.html#instance-member-getArbitrator",
-    "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract#getArbitrator",
-    "member"
-  ],
-  [
     "src/abstractwrappers/arbitrablecontract.js~arbitrablecontract#getdata",
     "class/src/abstractWrappers/ArbitrableContract.js~ArbitrableContract.html#instance-member-getData",
     "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract#getData",
@@ -522,9 +516,9 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
-    "src/abstractwrappers/disputes.js~disputes#_disputewatchers",
-    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_disputeWatchers",
-    "src/abstractWrappers/Disputes.js~Disputes#_disputeWatchers",
+    "src/abstractwrappers/disputes.js~disputes#_storenewdispute",
+    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-_storeNewDispute",
+    "src/abstractWrappers/Disputes.js~Disputes#_storeNewDispute",
     "member"
   ],
   [
@@ -540,12 +534,6 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "src/abstractwrappers/disputes.js~disputes#disputewatcher",
-    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-disputeWatcher",
-    "src/abstractWrappers/Disputes.js~Disputes#disputeWatcher",
-    "member"
-  ],
-  [
     "src/abstractwrappers/disputes.js~disputes#getdatafordispute",
     "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDataForDispute",
     "src/abstractWrappers/Disputes.js~Disputes#getDataForDispute",
@@ -558,9 +546,9 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/abstractwrappers/disputes.js~disputes#getdisputesforjuror",
-    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDisputesForJuror",
-    "src/abstractWrappers/Disputes.js~Disputes#getDisputesForJuror",
+    "src/abstractwrappers/disputes.js~disputes#getdisputecontractsforjuror",
+    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-getDisputeContractsForJuror",
+    "src/abstractWrappers/Disputes.js~Disputes#getDisputeContractsForJuror",
     "member"
   ],
   [
@@ -600,21 +588,9 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/abstractwrappers/disputes.js~disputes#stopwatchingfordisputes",
-    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-stopWatchingForDisputes",
-    "src/abstractWrappers/Disputes.js~Disputes#stopWatchingForDisputes",
-    "member"
-  ],
-  [
     "src/abstractwrappers/disputes.js~disputes#submitvotesfordispute",
     "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-submitVotesForDispute",
     "src/abstractWrappers/Disputes.js~Disputes#submitVotesForDispute",
-    "member"
-  ],
-  [
-    "src/abstractwrappers/disputes.js~disputes#watchfordisputes",
-    "class/src/abstractWrappers/Disputes.js~Disputes.html#instance-member-watchForDisputes",
-    "src/abstractWrappers/Disputes.js~Disputes#watchForDisputes",
     "member"
   ],
   [
@@ -765,12 +741,6 @@ window.esdocSearchIndex = [
     "src/contractwrappers/contractwrapper.js~contractwrapper#_deployasync",
     "class/src/contractWrappers/ContractWrapper.js~ContractWrapper.html#instance-member-_deployAsync",
     "src/contractWrappers/ContractWrapper.js~ContractWrapper#_deployAsync",
-    "member"
-  ],
-  [
-    "src/contractwrappers/contractwrapper.js~contractwrapper#_getcurrentblocknumber",
-    "class/src/contractWrappers/ContractWrapper.js~ContractWrapper.html#instance-member-_getCurrentBlockNumber",
-    "src/contractWrappers/ContractWrapper.js~ContractWrapper#_getCurrentBlockNumber",
     "member"
   ],
   [

@@ -878,7 +878,7 @@
     "__docId__": 64,
     "kind": "file",
     "name": "src/abstractWrappers/ArbitrableContract.js",
-    "content": "import AbstractWrapper from './AbstractWrapper'\nimport {\n  DEFAULT_ARBITRATION_COST,\n  DISPUTE_STATUS\n} from '../../constants'\n\n/**\n * Arbitrable Contract api\n */\nclass ArbitrableContract extends AbstractWrapper {\n  /**\n   * Arbitrable Contract Constructor\n   * @param {object} storeProvider store provider object\n   * @param {object} arbitrableWrapper arbitrable contract wrapper object\n   */\n  constructor(storeProvider, arbitrableWrapper) {\n    super(storeProvider, undefined, arbitrableWrapper)\n  }\n\n  /**\n  * Deploy a contract and add to the Store\n  * @param {string} account Ethereum address\n  * @param {int} value funds to be placed in contract\n  * @param {string} hashContract Keccak hash of the plain English contract\n  * @param {string} arbitratorAddress The address of the arbitrator contract\n  * @param {int} timeout Time after which a party automatically loose a dispute\n  * @param {string} partyB Ethereum address of the other party in the contract\n  * @param {bytes} arbitratorExtraData Extra data for the arbitrator\n  * @param {string} email Email address of the contract creator (default empty string)\n  * @param {string} description Description of what the contract is about (default empty string)\n  * @param args Extra arguments for the contract\n  * @return object | Error\n  */\n  deployContract = async (\n    account,\n    value,\n    hashContract,\n    arbitratorAddress,\n    timeout,\n    partyB,\n    arbitratorExtraData = '',\n    email = '',\n    description = '',\n    ...args\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const contractInstance = await this._ArbitrableContract.deploy(\n      account,\n      value,\n      hashContract,\n      arbitratorAddress,\n      timeout,\n      partyB,\n      arbitratorExtraData,\n      ...args\n    )\n\n    await this._StoreProvider.updateContract(\n      contractInstance.address,\n      hashContract,\n      account,\n      partyB,\n      arbitratorAddress,\n      timeout,\n      email,\n      description\n    )\n\n    // return contract data\n    return await this.getData(contractInstance.address, account)\n  }\n\n  /**\n   * Submit evidence\n   * @param {string} account ETH address of user\n   * @param {string} contractAddress ETH address of contract\n   * @param {string} name name of evidence\n   * @param {string} description description of evidence\n   * @param {string} evidence A link to an evidence using its URI.\n   * @return {string} txHash Hash transaction\n   */\n  submitEvidence = async (\n    account,\n    contractAddress,\n    name,\n    description = '',\n    url\n  ) => {\n    const txHash = await this._ArbitrableContract.submitEvidence(\n      account,\n      contractAddress,\n      name,\n      description,\n      url\n    )\n\n    await this._StoreProvider.addEvidenceContract(\n      contractAddress,\n      account,\n      name,\n      description,\n      url\n    )\n\n    return txHash\n  }\n\n  /**\n  * Get ruling options from dispute via event\n  * @param {string} contractAddress\n  * @returns {object[]} an array of objects that specify the name and value of the resolution option\n  */\n  getRulingOptions = async (\n    contractAddress\n  )  => {\n    const contractInstance = await this._loadArbitrableInstance(contractAddress)\n\n    // fetch dispute resolution options\n    const statusNumber = (await contractInstance.status()).toNumber()\n\n    // should this just be !== ?\n    if (statusNumber < DISPUTE_STATUS) return []\n\n    // FIXME we should have a block number to start from so we don't have to rip through the entire chain\n    const disputeEvent = await new Promise((resolve, reject) => {\n      contractInstance.Dispute({}, {fromBlock: 0, toBlock: 'latest'}).get((error, eventResult) => {\n        if (error) reject(error)\n        // this should be ok because there should only be 1 Dispute event per contract\n        resolve(eventResult[0])\n      })\n    })\n\n    if (!disputeEvent) return []\n\n    // FIXME there should only be one create dispute event per contract for now. allow abstract number\n    const rulingOptions = disputeEvent.args._rulingOptions.split(';')\n    let optionIndex = 0\n    const resolutionOptions = rulingOptions.map(option => {\n      optionIndex += 1\n      return {\n        name: option,\n        value: optionIndex\n      }\n    })\n\n    return resolutionOptions\n  }\n\n  getArbitrator = async (\n    arbitrableContractAddress\n  ) => {\n    const contractInstance = await this._loadArbitrableInstance(arbitrableContractAddress)\n\n    return await contractInstance.arbitrator()\n  }\n\n  /**\n  * Get data from the store and contract for Arbitrable Contract\n  * @param {string} contractAddress address of Arbitrable Contract\n  * @param {string} account ETH address of user\n  * @return {object} contract data\n  */\n  getData = async (\n    contractAddress,\n    account\n  ) => {\n    const contractData = await this._ArbitrableContract.getData(contractAddress)\n\n    let storeData = {}\n    if (account) storeData = await this._StoreProvider.getContractByAddress(account, contractAddress)\n\n    return Object.assign({}, storeData, contractData)\n  }\n}\n\nexport default ArbitrableContract\n",
+    "content": "import AbstractWrapper from './AbstractWrapper'\nimport {\n  DEFAULT_ARBITRATION_COST,\n  DISPUTE_STATUS\n} from '../../constants'\n\n/**\n * Arbitrable Contract api\n */\nclass ArbitrableContract extends AbstractWrapper {\n  /**\n   * Arbitrable Contract Constructor\n   * @param {object} storeProvider store provider object\n   * @param {object} arbitrableWrapper arbitrable contract wrapper object\n   */\n  constructor(storeProvider, arbitrableWrapper) {\n    super(storeProvider, undefined, arbitrableWrapper)\n  }\n\n  /**\n  * Deploy a contract and add to the Store\n  * @param {string} account Ethereum address\n  * @param {int} value funds to be placed in contract\n  * @param {string} hashContract Keccak hash of the plain English contract\n  * @param {string} arbitratorAddress The address of the arbitrator contract\n  * @param {int} timeout Time after which a party automatically loose a dispute\n  * @param {string} partyB Ethereum address of the other party in the contract\n  * @param {bytes} arbitratorExtraData Extra data for the arbitrator\n  * @param {string} email Email address of the contract creator (default empty string)\n  * @param {string} description Description of what the contract is about (default empty string)\n  * @param args Extra arguments for the contract\n  * @return object | Error\n  */\n  deployContract = async (\n    account,\n    value,\n    hashContract,\n    arbitratorAddress,\n    timeout,\n    partyB,\n    arbitratorExtraData = '',\n    email = '',\n    description = '',\n    ...args\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const contractInstance = await this._ArbitrableContract.deploy(\n      account,\n      value,\n      hashContract,\n      arbitratorAddress,\n      timeout,\n      partyB,\n      arbitratorExtraData,\n      ...args\n    )\n\n    await this._StoreProvider.updateContract(\n      contractInstance.address,\n      hashContract,\n      account,\n      partyB,\n      arbitratorAddress,\n      timeout,\n      email,\n      description\n    )\n\n    // return contract data\n    return await this.getData(contractInstance.address, account)\n  }\n\n  /**\n   * Submit evidence\n   * @param {string} account ETH address of user\n   * @param {string} contractAddress ETH address of contract\n   * @param {string} name name of evidence\n   * @param {string} description description of evidence\n   * @param {string} evidence A link to an evidence using its URI.\n   * @return {string} txHash Hash transaction\n   */\n  submitEvidence = async (\n    account,\n    contractAddress,\n    name,\n    description = '',\n    url\n  ) => {\n    const txHash = await this._ArbitrableContract.submitEvidence(\n      account,\n      contractAddress,\n      name,\n      description,\n      url\n    )\n\n    await this._StoreProvider.addEvidenceContract(\n      contractAddress,\n      account,\n      name,\n      description,\n      url\n    )\n\n    return txHash\n  }\n\n  /**\n  * Get ruling options from dispute via event\n  * @param {string} contractAddress\n  * @returns {object[]} an array of objects that specify the name and value of the resolution option\n  */\n  getRulingOptions = async (\n    contractAddress\n  )  => {\n    const contractInstance = await this._loadArbitrableInstance(contractAddress)\n\n    // fetch dispute resolution options\n    const statusNumber = (await contractInstance.status()).toNumber()\n\n    // should this just be !== ?\n    if (statusNumber < DISPUTE_STATUS) return []\n\n    // FIXME we should have a block number to start from so we don't have to rip through the entire chain\n    const disputeEvent = await new Promise((resolve, reject) => {\n      contractInstance.Dispute({}, {fromBlock: 0, toBlock: 'latest'}).get((error, eventResult) => {\n        if (error) reject(error)\n        // this should be ok because there should only be 1 Dispute event per contract\n        resolve(eventResult[0])\n      })\n    })\n\n    if (!disputeEvent) return []\n\n    // FIXME there should only be one create dispute event per contract for now. allow abstract number\n    const rulingOptions = disputeEvent.args._rulingOptions.split(';')\n    let optionIndex = 0\n    const resolutionOptions = rulingOptions.map(option => {\n      optionIndex += 1\n      return {\n        name: option,\n        value: optionIndex\n      }\n    })\n\n    return resolutionOptions\n  }\n\n  /**\n  * Get data from the store and contract for Arbitrable Contract\n  * @param {string} contractAddress address of Arbitrable Contract\n  * @param {string} account ETH address of user\n  * @return {object} contract data\n  */\n  getData = async (\n    contractAddress,\n    account\n  ) => {\n    const contractData = await this._ArbitrableContract.getData(contractAddress)\n\n    const storeData = await this._StoreProvider.getContractByAddress(account, contractAddress)\n\n    return Object.assign({}, storeData, contractData)\n  }\n}\n\nexport default ArbitrableContract\n",
     "static": true,
     "longname": "/Users/samvitello/work/kleros/kleros-api/src/abstractWrappers/ArbitrableContract.js",
     "access": "public",
@@ -1185,30 +1185,13 @@
   {
     "__docId__": 70,
     "kind": "member",
-    "name": "getArbitrator",
-    "memberof": "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract",
-    "static": false,
-    "longname": "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract#getArbitrator",
-    "access": "public",
-    "description": null,
-    "lineNumber": 150,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 71,
-    "kind": "member",
     "name": "getData",
     "memberof": "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract",
     "static": false,
     "longname": "src/abstractWrappers/ArbitrableContract.js~ArbitrableContract#getData",
     "access": "public",
     "description": "Get data from the store and contract for Arbitrable Contract",
-    "lineNumber": 164,
+    "lineNumber": 156,
     "params": [
       {
         "nullable": null,
@@ -1246,7 +1229,7 @@
     }
   },
   {
-    "__docId__": 72,
+    "__docId__": 71,
     "kind": "file",
     "name": "src/abstractWrappers/Arbitrator.js",
     "content": "import AbstractWrapper from './AbstractWrapper'\nimport _ from 'lodash'\n\n/**\n * Arbitrator api\n */\nclass Arbitrator extends AbstractWrapper {\n  /**\n   * Arbitrator Constructor\n   * @param {object} storeProvider store provider object\n   * @param {object} arbitratorWrapper arbitrator contract wrapper object\n   */\n  constructor(storeProvider, arbitratorWrapper) {\n    super(storeProvider, arbitratorWrapper, undefined)\n  }\n\n  // passthroughs\n  getPNKBalance = this._Arbitrator.getPNKBalance\n  activatePNK = this._Arbitrator.activatePNK\n  getData = this._Arbitrator.getData\n  passPeriod = this._Arbitrator.passPeriod\n\n  /**\n   * @param {number} amount number of pinakion to buy\n   * @param {address} account address of user\n   * @return {object[]} balance of user\n   */\n  buyPNK = async (\n    amount,\n    arbitratorAddress, // address of KlerosPOC\n    account\n  ) => {\n    const txHash = await this._Arbitrator.buyPNK(amount, arbitratorAddress, account)\n    if (txHash) {\n      // update store so user can get instantaneous feedback\n      let userProfile = await this._StoreProvider.getUserProfile(account)\n      if (_.isNull(userProfile)) userProfile = await this._StoreProvider.newUserProfile(account)\n      // FIXME seems like a super hacky way to update store\n      userProfile.balance = (parseInt(userProfile.balance) ? userProfile.balance : 0) + parseInt(amount)\n      delete userProfile._id\n      delete userProfile.created_at\n      const response = await this._StoreProvider.newUserProfile(account, userProfile)\n\n      return this.getPNKBalance(arbitratorAddress, account)\n    } else {\n      throw new Error(\"unable to buy PNK\")\n    }\n  }\n\n  /**\n   * Get all contracts TODO do we need to get contract data from blockchain?\n   * @param {string} account address of user\n   * @return {object[]} contract data from store\n   */\n  getContractsForUser = async (\n    account\n  ) => {\n    // fetch user profile\n    let userProfile = await this._StoreProvider.getUserProfile(account)\n    if (_.isNull(userProfile)) userProfile = await this._StoreProvider.newUserProfile(account)\n\n    return userProfile.contracts\n  }\n}\n\nexport default Arbitrator\n",
@@ -1257,7 +1240,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 73,
+    "__docId__": 72,
     "kind": "class",
     "name": "Arbitrator",
     "memberof": "src/abstractWrappers/Arbitrator.js",
@@ -1275,7 +1258,7 @@
     ]
   },
   {
-    "__docId__": 74,
+    "__docId__": 73,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1310,7 +1293,7 @@
     ]
   },
   {
-    "__docId__": 75,
+    "__docId__": 74,
     "kind": "member",
     "name": "getPNKBalance",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1327,7 +1310,7 @@
     }
   },
   {
-    "__docId__": 76,
+    "__docId__": 75,
     "kind": "member",
     "name": "activatePNK",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1344,7 +1327,7 @@
     }
   },
   {
-    "__docId__": 77,
+    "__docId__": 76,
     "kind": "member",
     "name": "getData",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1361,7 +1344,7 @@
     }
   },
   {
-    "__docId__": 78,
+    "__docId__": 77,
     "kind": "member",
     "name": "passPeriod",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1378,7 +1361,7 @@
     }
   },
   {
-    "__docId__": 79,
+    "__docId__": 78,
     "kind": "member",
     "name": "buyPNK",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1424,7 +1407,7 @@
     }
   },
   {
-    "__docId__": 80,
+    "__docId__": 79,
     "kind": "member",
     "name": "getContractsForUser",
     "memberof": "src/abstractWrappers/Arbitrator.js~Arbitrator",
@@ -1460,10 +1443,10 @@
     }
   },
   {
-    "__docId__": 81,
+    "__docId__": 80,
     "kind": "file",
     "name": "src/abstractWrappers/Disputes.js",
-    "content": "import AbstractWrapper from './AbstractWrapper'\nimport {\n  NULL_ADDRESS,\n  VOTING_PERIOD,\n  DEFAULT_ARBITRATION_COST,\n  DISPUTE_STATUS\n} from '../../constants'\nimport _ from 'lodash'\n\n/**\n * Disputes api\n */\nclass Disputes extends AbstractWrapper {\n  /**\n   * Disputes Constructor\n   * @param {object} storeProvider store provider object\n   * @param {object} arbitratorWrapper arbitrator contract wrapper object\n   * @param {object} arbitrableWrapper arbitrable contract wrapper object\n   */\n  constructor(storeProvider, arbitratorWrapper, arbitrableWrapper) {\n    super(storeProvider, arbitratorWrapper, arbitrableWrapper)\n    this._disputeWatchers = {}\n    this.disputeWatcher\n  }\n\n  /**\n  * If there is a dispute in contract update store\n  * FIXME contracts with multiple disputes will need a way to clarify that this is a new dispute\n  * @param {string} arbitratorAddress\n  */\n  watchForDisputes = async (\n    arbitratorAddress,\n  ) => {\n    this._checkArbitratorWrappersSet()\n\n    const lastBlock = await this._StoreProvider.getLastBlock(arbitratorAddress)\n    const currentBlock = this._Arbitrator._getCurrentBlockNumber()\n    const contractInstance = await this._loadArbitratorInstance(arbitratorAddress)\n    this.disputeWatcher = contractInstance.DisputeCreation({}, {fromBlock: lastBlock, toBlock: 'latest'})\n\n    if (lastBlock < currentBlock) {\n      // FETCH DISPUTES WE MIGHT HAVE MISSED\n      this.disputeWatcher.get((error, eventResult) => {\n        if (!error) {\n          eventResult.map(event => {\n            // add new dispute to store\n            this._updateStoreForDispute(arbitratorAddress, event.args._disputeID)\n          })\n\n          this._StoreProvider.updateLastBlock(arbitratorAddress, currentBlock)\n        }\n      })\n    }\n\n    // WATCH FOR NEW DISPUTES\n    this.disputeWatcher.watch((error, result) => {\n      if (!error) {\n        const disputeId = result.args._disputeID\n        this._updateStoreForDispute(arbitratorAddress, disputeId)\n\n        this._StoreProvider.updateLastBlock(arbitratorAddress, result.blockNumber)\n      }\n    })\n  }\n\n  stopWatchingForDisputes = () => {\n    this.disputeWatcher.stopWatching()\n  }\n\n  /**\n  * Pay the arbitration fee to raise a dispute. To be called by the party A.\n  * @param {string} account Ethereum account\n  * @param {string} arbitrableContract Address address of arbitrable contract\n  * @param {number} arbitrationCost Amount to pay the arbitrator\n  * @return {string} txHash hash transaction | Error\n  */\n  raiseDisputePartyA = async (\n    account,\n    arbitrableContractAddress,\n    arbitrationCost = DEFAULT_ARBITRATION_COST\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    try {\n      const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyA(\n        account,\n        arbitrableContractAddress,\n        arbitrationCost\n      )\n\n      if (!txHash) throw new Error('unable to pay arbitration fee for party A')\n\n      return txHash\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n  * Pay the arbitration fee to raise a dispute. To be called by the party B.\n  * @param {string} account Ethereum account\n  * @param {string} arbitrableContract Address address of arbitrable contract\n  * @param {number} arbitrationCost Amount to pay the arbitrator\n  * @return {string} txHash hash of the transaction | Error\n  */\n  raiseDisputePartyB = async (\n    account,\n    arbitrableContractAddress,\n    arbitrationCost = DEFAULT_ARBITRATION_COST\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyB(\n      account,\n      arbitrableContractAddress,\n      arbitrationCost\n    )\n\n    if (!txHash) throw new Error('unable to pay arbitration fee for party B')\n\n    return txHash\n  }\n\n  /**\n   * Get disputes for user with extra data from arbitrated transaction and store\n   * @param {string} arbitratorAddress address of Kleros contract\n   * @param {string} account address of user\n   * @return {object[]} dispute data objects for user\n   */\n  getDisputesForUser = async (\n    arbitratorAddress,\n    account\n  ) => {\n    // FIXME don't like having to call this every fnc\n    this._checkArbitratorWrappersSet()\n    this._checkArbitrableWrappersSet()\n    // contract data\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress, account)\n\n    // fetch user profile\n    let profile = await this._StoreProvider.getUserProfile(account)\n    if (_.isNull(profile)) profile = await this._StoreProvider.newUserProfile(account)\n    // fetch current contract period\n    const period = arbitratorData.period\n    const currentSession = arbitratorData.session\n    // new jurors have not been chosen yet. don't update\n    if (period !== VOTING_PERIOD) {\n      let disputes = await this._StoreProvider.getDisputesForUser(account)\n      disputes = await Promise.all(disputes.map(async (dispute) => {\n        return await this.getDataForDispute(dispute.arbitratorAddress, dispute.disputeId, account)\n      }))\n\n      return disputes\n    }\n\n    if (currentSession != profile.session) {\n      // get disputes for juror\n      const myDisputeIds = await this.getDisputesForJuror(arbitratorAddress, account)\n      // update store for each dispute\n      await Promise.all(myDisputeIds.map(async disputeId => {\n        await this._updateStoreForDispute(arbitratorAddress, disputeId, account)\n      }))\n\n      // update session on profile\n      profile = await this._StoreProvider.getUserProfile(account)\n      profile.session = currentSession\n      await this._StoreProvider.updateUserProfile(account, profile)\n    }\n    // return array of all disputes for user\n    let disputes = await this._StoreProvider.getDisputesForUser(account)\n    disputes = await Promise.all(disputes.map(async (dispute) => {\n      return await this.getDataForDispute(dispute.arbitratorAddress, dispute.disputeId, account)\n    }))\n\n    return disputes\n  }\n\n  /**\n   * Get disputes from Kleros contract\n   * @param {string} arbitratorAddress address of Kleros contract\n   * @param {string} account address of user\n   * @return {int[]} array of dispute id's\n   */\n  getDisputesForJuror = async (\n    arbitratorAddress,\n    account,\n  ) => {\n    // FIXME don't like having to call this every fnc\n    this._checkArbitratorWrappersSet()\n    // contract data\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress, account)\n    const myDisputes = []\n    let disputeId = 0\n    const currentSession = arbitratorData.session\n\n    let dispute\n    while (1) {\n      // iterate over all disputes (FIXME inefficient)\n      try {\n         dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n         if (dispute.arbitratedContract === NULL_ADDRESS) break\n         // session + number of appeals\n         const disputeSession = dispute.firstSession + dispute.numberOfAppeals\n         // if dispute not in current session skip\n         if (disputeSession !== currentSession) {\n           disputeId++\n           dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n           continue\n         }\n\n         const votes = await this.getVotesForJuror(arbitratorAddress, disputeId, account)\n         if (votes.length > 0) {\n           myDisputes.push(\n             disputeId\n           )\n         }\n         // check next dispute\n         disputeId += 1\n      } catch (e) {\n        // getDispute(n) throws an error if index out of range\n        break\n      }\n    }\n\n    return myDisputes\n  }\n\n  /**\n  * Fetch the votes a juror has in a dispute\n  * @param {string} arbitratorAddress address of the arbitrator contract\n  * @param {number} disputeId id of the dispute\n  * @param {string} account potential jurors address\n  * @return {number[]} array of integers indicating the draw\n  */\n  getVotesForJuror = async (\n    arbitratorAddress,\n    disputeId,\n    account\n  ) => {\n    const numberOfJurors = await this._Arbitrator.getAmountOfJurorsForDispute(arbitratorAddress, disputeId)\n    const votes = []\n    // FIXME map doesn't seem to make sense here. would need to construct array of possible choices and then filter?\n    for (let draw=1; draw<=numberOfJurors; draw++) {\n      const isJuror = await this._Arbitrator.isJurorDrawnForDispute(disputeId, draw, arbitratorAddress, account)\n      if (isJuror) {\n        votes.push(draw)\n      }\n    }\n\n    return votes\n  }\n\n  /**\n   * Submit votes. Note can only be called during Voting period (Period 2)\n   * @param {string} arbitratorAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {number} ruling int representing the jurors decision\n   * @param {number[]} votes int[] of drawn votes for dispute\n   * @param {string} account address of user\n   * @return {string} transaction hash | Error\n   */\n  submitVotesForDispute = async (\n    arbitratorAddress,\n    disputeId,\n    ruling,\n    votes,\n    account\n  ) => {\n    const txHash = await this._Arbitrator.submitVotes(\n      arbitratorAddress,\n      disputeId,\n      ruling,\n      votes,\n      account\n    )\n\n    if (txHash) {\n      // FIXME don't like having to fetch data just to get the arbitratedContract\n      const disputeData = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n      // mark in store that you have ruled on dispute\n      await this._StoreProvider.updateDisputeProfile(\n        account,\n        votes,\n        arbitratorAddress,\n        disputeId,\n        true,\n        true\n      )\n\n      return txHash\n    } else {\n      throw new Error('unable to submit votes')\n    }\n  }\n\n  /**\n  * get the deadline for dispute\n  * @param {string} arbitratorAddress address of arbitrator contract\n  * @param {number} period default to voting period\n  * @return {string} date string in the form dd/mm/yyyy\n  */\n  getDeadlineForDispute = async (\n    arbitratorAddress,\n    period = VOTING_PERIOD\n  ) => {\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress)\n    // compute end date\n    const startTime = arbitratorData.lastPeriodChange\n    const length = await this._Arbitrator.getTimeForPeriod(arbitratorAddress, period)\n    // FIXME this is all UTC for now. Timezones are a pain\n    const deadline = new Date(0);\n    deadline.setUTCSeconds(startTime)\n    deadline.setSeconds(deadline.getSeconds() + length);\n\n    return `${deadline.getUTCDate()}/${deadline.getUTCMonth()}/${deadline.getFullYear()}`\n  }\n\n  /**\n  * update store with new dispute data\n  * @param {string} arbitratorAddress Address address of arbitrator contract\n  * @param {int} disputeId index of dispute\n  * @param {string} jurorAddress <optional> address of juror\n  */\n  _updateStoreForDispute = async (\n    arbitratorAddress,\n    disputeId,\n    jurorAddress\n  ) => {\n    const disputeData = await this.getDataForDispute(\n      arbitratorAddress,\n      disputeId,\n      jurorAddress\n    )\n\n    // update dispute\n    await this._StoreProvider.updateDispute(\n      disputeData.disputeId,\n      disputeData.arbitratorAddress,\n      disputeData.hash,\n      disputeData.partyA,\n      disputeData.partyB,\n      disputeData.title,\n      disputeData.deadline,\n      disputeData.status,\n      disputeData.fee,\n      disputeData.information,\n      disputeData.justification,\n      disputeData.resolutionOptions\n    )\n\n    // update profile partyA\n    await this._StoreProvider.updateDisputeProfile(\n      disputeData.partyA,\n      [],\n      disputeData.arbitratorAddress,\n      disputeData.disputeId,\n      false,\n      false\n    )\n\n    // update profile partyB\n    await this._StoreProvider.updateDisputeProfile(\n      disputeData.partyB,\n      [],\n      disputeData.arbitratorAddress,\n      disputeData.disputeId,\n      false,\n      false\n    )\n\n    if (jurorAddress) {\n      // update juror profile <optional>\n      await this._StoreProvider.updateDisputeProfile(\n        jurorAddress,\n        disputeData.votes,\n        disputeData.arbitratorAddress,\n        disputeData.disputeId,\n        disputeData.votes.length > 0 ? true : false,\n        false\n      )\n    }\n  }\n\n  /**\n  * get user data for a dispute from the store\n  * @param {string} arbitratorAddress address for arbitrator contract\n  * @param {int} disputeId index of dispute\n  * @param {string} account jurors address\n  * @return {object} dispute data from store for user\n  */\n  getUserDisputeFromStore = async (\n    arbitratorAddress,\n    disputeId,\n    account\n  ) => {\n    const userProfile = await this._StoreProvider.getUserProfile(account)\n\n    const disputeArray = _.filter(userProfile.disputes, (dispute) => {\n      return (dispute.disputeId === disputeId && dispute.arbitratorAddress == arbitratorAddress)\n    })\n\n    if (_.isEmpty(disputeArray)) throw new Error(`User ${account} does not have store data for dispute`)\n\n    return disputeArray[0]\n  }\n\n  /**\n  * get evidence for contract\n  * @param {string} arbitrableContract Address address for arbitrable contract\n  * @param {string} account <optional> jurors address\n  * @return {object[]} array of evidence objects\n  */\n  getEvidenceForArbitrableContract = async (\n    arbitrableContractAddress\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)\n    const partyAContractData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyA,\n      arbitrableContractAddress\n    )\n    const partyBContractData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyB,\n      arbitrableContractAddress\n    )\n\n    const partyAEvidence = partyAContractData ? partyAContractData.evidences : []\n    const partyBEvidence = partyBContractData ? partyBContractData.evidences : []\n\n    return partyAEvidence.concat(partyBEvidence)\n  }\n\n  /**\n  * get data for a dispute\n  * @param {string} arbitratorAddress Address address for arbitrator contract\n  * @param {int} disputeId index of dispute\n  * @param {string} account <optional> jurors address\n  * @return {Object} data object for dispute that uses data from the contract and store\n  */\n  getDataForDispute = async (\n    arbitratorAddress,\n    disputeId,\n    account\n  ) => {\n    this._checkArbitratorWrappersSet()\n    this._checkArbitrableWrappersSet()\n\n    // FIXME should we just return what we have in the store?\n    const dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n    if (!dispute) {\n      throw new Error(`Dispute with arbitrator: ${arbitratorAddress} and disputeId: ${disputeId} does not exist`)\n    }\n    const arbitrableContractAddress = dispute.arbitratedContract\n\n    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)\n    const constractStoreData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyA,\n      arbitrableContractAddress\n    )\n\n    let votes = []\n    let isJuror = false\n    let hasRuled = false\n    if (account) {\n      votes = await this.getVotesForJuror(arbitratorAddress, disputeId, account)\n      try {\n        const userData = await this.getUserDisputeFromStore(arbitratorAddress, disputeId, account)\n        isJuror = userData.isJuror\n        hasRuled = userData.hasRuled\n      } catch (e) {\n        isJuror = false\n        hasRuled = false\n      }\n    }\n\n    // get evidence\n    const evidence = await this.getEvidenceForArbitrableContract(arbitrableContractAddress)\n\n    // get deadline\n    const deadline = await this.getDeadlineForDispute(arbitratorAddress)\n\n    // get ruling\n    const ruling = await this._Arbitrator.currentRulingForDispute(arbitratorAddress, disputeId)\n\n    return ({\n      // FIXME hash not being stored in contract atm\n      hash: arbitrableContractAddress,\n      partyA: arbitrableContractData.partyA,\n      partyB: arbitrableContractData.partyB,\n      arbitrableContractStatus: arbitrableContractData.status,\n      disputeState: dispute.state,\n      arbitrableContractAddress: arbitrableContractAddress,\n      arbitratorAddress: arbitratorAddress,\n      fee: dispute.arbitrationFeePerJuror,\n      disputeId: disputeId,\n      session: dispute.firstSession + dispute.numberOfAppeals,\n      deadline: deadline,\n      // store data\n      description: constractStoreData ? constractStoreData.description : undefined,\n      email: constractStoreData ? constractStoreData.email : undefined,\n      votes: votes,\n      isJuror: isJuror,\n      hasRuled: hasRuled,\n      ruling: ruling,\n      evidence: evidence\n    })\n  }\n}\n\nexport default Disputes\n",
+    "content": "import AbstractWrapper from './AbstractWrapper'\nimport {\n  NULL_ADDRESS,\n  VOTING_PERIOD,\n  DEFAULT_ARBITRATION_COST,\n  DISPUTE_STATUS\n} from '../../constants'\nimport _ from 'lodash'\n\n/**\n * Disputes api\n */\nclass Disputes extends AbstractWrapper {\n  /**\n   * Disputes Constructor\n   * @param {object} storeProvider store provider object\n   * @param {object} arbitratorWrapper arbitrator contract wrapper object\n   * @param {object} arbitrableWrapper arbitrable contract wrapper object\n   */\n  constructor(storeProvider, arbitratorWrapper, arbitrableWrapper) {\n    super(storeProvider, arbitratorWrapper, arbitrableWrapper)\n  }\n\n  /**\n  * Pay the arbitration fee to raise a dispute. To be called by the party A.\n  * @param {string} account Ethereum account\n  * @param {string} arbitrableContract Address address of arbitrable contract\n  * @param {number} arbitrationCost Amount to pay the arbitrator\n  * @return {string} txHash hash transaction | Error\n  */\n  raiseDisputePartyA = async (\n    account,\n    arbitrableContractAddress,\n    arbitrationCost = DEFAULT_ARBITRATION_COST\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    try {\n      const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyA(\n        account,\n        arbitrableContractAddress,\n        arbitrationCost\n      )\n\n      if (!txHash) throw new Error('unable to pay arbitration fee for party A')\n\n      // update store if there is a dispute\n      await this._storeNewDispute(arbitrableContractAddress, account)\n\n      return txHash\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n  * Pay the arbitration fee to raise a dispute. To be called by the party B.\n  * @param {string} account Ethereum account\n  * @param {string} arbitrableContract Address address of arbitrable contract\n  * @param {number} arbitrationCost Amount to pay the arbitrator\n  * @return {string} txHash hash of the transaction | Error\n  */\n  raiseDisputePartyB = async (\n    account,\n    arbitrableContractAddress,\n    arbitrationCost = DEFAULT_ARBITRATION_COST\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyB(\n      account,\n      arbitrableContractAddress,\n      arbitrationCost\n    )\n\n    if (!txHash) throw new Error('unable to pay arbitration fee for party B')\n\n    // update store if there is a dispute\n    await this._storeNewDispute(arbitrableContractAddress)\n\n    return txHash\n  }\n\n  /**\n  * If there is a dispute in contract update store\n  * @param {string} contractAddress\n  * @param {string} account\n  */\n  _storeNewDispute = async (\n    arbitrableContractAddress,\n    account\n  ) => {\n    this._checkArbitratorWrappersSet()\n    this._checkArbitrableWrappersSet()\n\n    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)\n\n    if (arbitrableContractData.status === DISPUTE_STATUS) {\n      await this._updateStoreForDispute(arbitrableContractAddress, account)\n    }\n  }\n\n  /**\n   * Get disputes for user with extra data from arbitrated transaction and store\n   * @param {string} arbitratorAddress address of Kleros contract\n   * @param {string} account address of user\n   * @return {object[]} dispute data objects for user\n   */\n  getDisputesForUser = async (\n    arbitratorAddress,\n    account\n  ) => {\n    // FIXME don't like having to call this every fnc\n    this._checkArbitratorWrappersSet()\n    this._checkArbitrableWrappersSet()\n    // contract data\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress, account)\n\n    // fetch user profile\n    let profile = await this._StoreProvider.getUserProfile(account)\n    if (_.isNull(profile)) profile = await this._StoreProvider.newUserProfile(account)\n    // fetch current contract period\n    const period = arbitratorData.period\n    const currentSession = arbitratorData.session\n    // new jurors have not been chosen yet. don't update\n    if (period !== VOTING_PERIOD) {\n      let disputes = await this._StoreProvider.getDisputesForUser(account)\n      disputes = await Promise.all(disputes.map(async (dispute) => {\n        return await this.getDataForDispute(dispute.contractAddress, account)\n      }))\n\n      return disputes\n    }\n\n    if (currentSession != profile.session) {\n      // get disputes for juror\n      const myDisputeContracts = await this.getDisputeContractsForJuror(arbitratorAddress, account)\n      // update store for each dispute\n      await Promise.all(myDisputeContracts.map(async contractAddress => {\n        await this._updateStoreForDispute(contractAddress, account)\n      }))\n\n      // update session on profile\n      profile = await this._StoreProvider.getUserProfile(account)\n      profile.session = currentSession\n      await this._StoreProvider.updateUserProfile(account, profile)\n    }\n    // return array of all disputes for user\n    let disputes = await this._StoreProvider.getDisputesForUser(account)\n    disputes = await Promise.all(disputes.map(async (dispute) => {\n      return await this.getDataForDispute(dispute.contractAddress, account)\n    }))\n\n    return disputes\n  }\n\n  /**\n   * Get disputes from Kleros contract\n   * @param {string} arbitratorAddress address of Kleros contract\n   * @param {string} account address of user\n   * @return {string[]} array of contract addresses\n   */\n  getDisputeContractsForJuror = async (\n    arbitratorAddress,\n    account,\n  ) => {\n    // FIXME don't like having to call this every fnc\n    this._checkArbitratorWrappersSet()\n    // contract data\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress, account)\n    const myDisputes = []\n    let disputeId = 0\n    const currentSession = arbitratorData.session\n\n    let dispute\n    while (1) {\n      // iterate over all disputes (FIXME inefficient)\n      try {\n         dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n         if (dispute.arbitratedContract === NULL_ADDRESS) break\n         // session + number of appeals\n         const disputeSession = dispute.firstSession + dispute.numberOfAppeals\n         // if dispute not in current session skip\n         if (disputeSession !== currentSession) {\n           disputeId++\n           dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n           continue\n         }\n\n         const votes = await this.getVotesForJuror(disputeId, arbitratorAddress, account)\n         if (votes.length > 0) {\n           myDisputes.push(\n             dispute.arbitratedContract\n           )\n         }\n         // check next dispute\n         disputeId += 1\n      } catch (e) {\n        // getDispute(n) throws an error if index out of range\n        break\n      }\n    }\n\n    return myDisputes\n  }\n\n  /**\n  * Fetch the votes a juror has in a dispute\n  * @param {number} disputeId id of the dispute\n  * @param {string} arbitratorAddress address of the arbitrator contract\n  * @param {string} account potential jurors address\n  * @return {number[]} array of integers indicating the draw\n  */\n  getVotesForJuror = async (\n    disputeId,\n    arbitratorAddress,\n    account\n  ) => {\n    const numberOfJurors = await this._Arbitrator.getAmountOfJurorsForDispute(arbitratorAddress, disputeId)\n    const votes = []\n    // FIXME map doesn't seem to make sense here. would need to construct array of possible choices and then filter?\n    for (let draw=1; draw<=numberOfJurors; draw++) {\n      const isJuror = await this._Arbitrator.isJurorDrawnForDispute(disputeId, draw, arbitratorAddress, account)\n      if (isJuror) {\n        votes.push(draw)\n      }\n    }\n\n    return votes\n  }\n\n  /**\n   * Submit votes. Note can only be called during Voting period (Period 2)\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {number} ruling int representing the jurors decision\n   * @param {number[]} votes int[] of drawn votes for dispute\n   * @param {string} account address of user\n   * @return {string} transaction hash | Error\n   */\n  submitVotesForDispute = async (\n    arbitratorAddress,\n    disputeId,\n    ruling,\n    votes,\n    hash,\n    account\n  ) => {\n    const txHash = await this._Arbitrator.submitVotes(\n      arbitratorAddress,\n      disputeId,\n      ruling,\n      votes,\n      hash,\n      account\n    )\n\n    if (txHash) {\n      // mark in store that you have ruled on dispute\n      await this._StoreProvider.updateDisputeProfile(\n        account,\n        votes,\n        hash,\n        true,\n        true\n      )\n\n      return txHash\n    } else {\n      throw new Error('unable to submit votes')\n    }\n  }\n\n  /**\n  * get the deadline for dispute\n  * @param {string} arbitratorAddress address of arbitrator contract\n  * @param {number} period default to voting period\n  * @return {string} date string in the form dd/mm/yyyy\n  */\n  getDeadlineForDispute = async (\n    arbitratorAddress,\n    period = VOTING_PERIOD\n  ) => {\n    const arbitratorData = await this._Arbitrator.getData(arbitratorAddress)\n    // compute end date\n    const startTime = arbitratorData.lastPeriodChange\n    const length = await this._Arbitrator.getTimeForPeriod(arbitratorAddress, period)\n    // FIXME this is all UTC for now. Timezones are a pain\n    const deadline = new Date(0);\n    deadline.setUTCSeconds(startTime)\n    deadline.setSeconds(deadline.getSeconds() + length);\n\n    return `${deadline.getUTCDate()}/${deadline.getUTCMonth()}/${deadline.getFullYear()}`\n  }\n\n  /**\n  * update store with new dispute data\n  * @param {string} arbitrableContract Address address of arbitrable contract\n  * @param {string} jurorAddress <optional> address of juror\n  */\n  _updateStoreForDispute = async (\n    arbitrableContractAddress,\n    jurorAddress\n  ) => {\n    const disputeData = await this.getDataForDispute(\n      arbitrableContractAddress,\n      jurorAddress\n    )\n\n    // update dispute\n    await this._StoreProvider.updateDispute(\n      disputeData.disputeId,\n      disputeData.hash,\n      disputeData.arbitrableContractAddress,\n      disputeData.partyA,\n      disputeData.partyB,\n      disputeData.title,\n      disputeData.deadline,\n      disputeData.status,\n      disputeData.fee,\n      disputeData.information,\n      disputeData.justification,\n      disputeData.resolutionOptions\n    )\n\n    // update profile partyA\n    await this._StoreProvider.updateDisputeProfile(\n      disputeData.partyA,\n      [],\n      disputeData.hash,\n      false,\n      false\n    )\n\n    // update profile partyB\n    await this._StoreProvider.updateDisputeProfile(\n      disputeData.partyB,\n      [],\n      disputeData.hash,\n      false,\n      false\n    )\n\n    if (jurorAddress) {\n      // update juror profile <optional>\n      await this._StoreProvider.updateDisputeProfile(\n        jurorAddress,\n        disputeData.votes,\n        disputeData.hash,\n        disputeData.votes.length > 0 ? true : false,\n        false\n      )\n    }\n  }\n\n  /**\n  * get user data for a dispute from the store\n  * @param {string} arbitrableContract Address address for arbitrable contract\n  * @param {string} account <optional> jurors address\n  * @return {object} dispute data from store for user\n  */\n  getUserDisputeFromStore = async (\n    arbitrableContractAddress,\n    account\n  ) => {\n    const userProfile = await this._StoreProvider.getUserProfile(account)\n\n    const disputeArray = _.filter(userProfile.disputes, (dispute) => {\n      // FIXME update store to use arbitrableContractAddress instead of hash\n      return dispute.hash === arbitrableContractAddress\n    })\n\n    if (_.isEmpty(disputeArray)) throw new Error(`User ${account} does not have store data for dispute`)\n\n    return disputeArray[0]\n  }\n\n  /**\n  * get evidence for contract\n  * @param {string} arbitrableContract Address address for arbitrable contract\n  * @param {string} account <optional> jurors address\n  * @return {object[]} array of evidence objects\n  */\n  getEvidenceForArbitrableContract = async (\n    arbitrableContractAddress\n  ) => {\n    this._checkArbitrableWrappersSet()\n\n    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)\n    const partyAContractData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyA,\n      arbitrableContractAddress\n    )\n    const partyBContractData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyB,\n      arbitrableContractAddress\n    )\n\n    const partyAEvidence = partyAContractData ? partyAContractData.evidences : []\n    const partyBEvidence = partyBContractData ? partyBContractData.evidences : []\n\n    return partyAEvidence.concat(partyBEvidence)\n  }\n\n  /**\n  * get data for a dispute\n  * @param {string} arbitrableContract Address address for arbitrable contract\n  * @param {string} account <optional> jurors address\n  * @return {Object} data object for dispute that uses data from the contract and store\n  */\n  getDataForDispute = async (\n    arbitrableContractAddress,\n    account\n  ) => {\n    this._checkArbitratorWrappersSet()\n    this._checkArbitrableWrappersSet()\n\n    const arbitrableContractData = await this._ArbitrableContract.getData(arbitrableContractAddress)\n    const arbitratorAddress = arbitrableContractData.arbitrator\n    const constractStoreData = await this._StoreProvider.getContractByAddress(\n      arbitrableContractData.partyA,\n      arbitrableContractAddress\n    )\n\n    const disputeId = arbitrableContractData.disputeId\n    if (disputeId === undefined) throw new Error(`Arbitrable contract ${arbitrableContractAddress} does not have a dispute`)\n    const dispute = await this._Arbitrator.getDispute(arbitratorAddress, disputeId)\n\n    let votes = []\n    let isJuror = false\n    let hasRuled = false\n    if (account) {\n      votes = await this.getVotesForJuror(disputeId, arbitratorAddress, account)\n      try {\n        const userData = await this.getUserDisputeFromStore(arbitrableContractAddress, account)\n        isJuror = userData.isJuror\n        hasRuled = userData.hasRuled\n      } catch (e) {\n        isJuror = false\n        hasRuled = false\n      }\n    }\n\n    // get evidence\n    const evidence = await this.getEvidenceForArbitrableContract(arbitrableContractAddress)\n\n    // get deadline\n    const deadline = await this.getDeadlineForDispute(arbitratorAddress)\n\n    // get ruling\n    const ruling = await this._Arbitrator.currentRulingForDispute(disputeId, arbitratorAddress)\n\n    return ({\n      // FIXME hash not being stored in contract atm\n      hash: arbitrableContractAddress,\n      partyA: arbitrableContractData.partyA,\n      partyB: arbitrableContractData.partyB,\n      arbitrableContractStatus: arbitrableContractData.status,\n      disputeState: dispute.state,\n      arbitrableContractAddress: arbitrableContractAddress,\n      arbitratorAddress: arbitratorAddress,\n      fee: dispute.arbitrationFeePerJuror,\n      disputeId: disputeId,\n      session: dispute.firstSession + dispute.numberOfAppeals,\n      deadline: deadline,\n      // store data\n      description: constractStoreData ? constractStoreData.description : undefined,\n      email: constractStoreData ? constractStoreData.email : undefined,\n      votes: votes,\n      isJuror: isJuror,\n      hasRuled: hasRuled,\n      ruling: ruling,\n      evidence: evidence\n    })\n  }\n}\n\nexport default Disputes\n",
     "static": true,
     "longname": "/Users/samvitello/work/kleros/kleros-api/src/abstractWrappers/Disputes.js",
     "access": "public",
@@ -1471,7 +1454,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 82,
+    "__docId__": 81,
     "kind": "class",
     "name": "Disputes",
     "memberof": "src/abstractWrappers/Disputes.js",
@@ -1489,7 +1472,7 @@
     ]
   },
   {
-    "__docId__": 83,
+    "__docId__": 82,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1534,85 +1517,7 @@
     ]
   },
   {
-    "__docId__": 84,
-    "kind": "member",
-    "name": "_disputeWatchers",
-    "memberof": "src/abstractWrappers/Disputes.js~Disputes",
-    "static": false,
-    "longname": "src/abstractWrappers/Disputes.js~Disputes#_disputeWatchers",
-    "access": "private",
-    "description": null,
-    "lineNumber": 22,
-    "undocument": true,
-    "type": {
-      "types": [
-        "{}"
-      ]
-    }
-  },
-  {
-    "__docId__": 85,
-    "kind": "member",
-    "name": "watchForDisputes",
-    "memberof": "src/abstractWrappers/Disputes.js~Disputes",
-    "static": false,
-    "longname": "src/abstractWrappers/Disputes.js~Disputes#watchForDisputes",
-    "access": "public",
-    "description": "If there is a dispute in contract update store\nFIXME contracts with multiple disputes will need a way to clarify that this is a new dispute",
-    "lineNumber": 31,
-    "params": [
-      {
-        "nullable": null,
-        "types": [
-          "string"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "arbitratorAddress",
-        "description": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 86,
-    "kind": "member",
-    "name": "disputeWatcher",
-    "memberof": "src/abstractWrappers/Disputes.js~Disputes",
-    "longname": "src/abstractWrappers/Disputes.js~Disputes#disputeWatcher",
-    "access": "public",
-    "description": null,
-    "lineNumber": 39,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 87,
-    "kind": "member",
-    "name": "stopWatchingForDisputes",
-    "memberof": "src/abstractWrappers/Disputes.js~Disputes",
-    "static": false,
-    "longname": "src/abstractWrappers/Disputes.js~Disputes#stopWatchingForDisputes",
-    "access": "public",
-    "description": null,
-    "lineNumber": 66,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 88,
+    "__docId__": 83,
     "kind": "member",
     "name": "raiseDisputePartyA",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1620,7 +1525,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#raiseDisputePartyA",
     "access": "public",
     "description": "Pay the arbitration fee to raise a dispute. To be called by the party A.",
-    "lineNumber": 77,
+    "lineNumber": 31,
     "params": [
       {
         "nullable": null,
@@ -1668,7 +1573,7 @@
     }
   },
   {
-    "__docId__": 89,
+    "__docId__": 84,
     "kind": "member",
     "name": "raiseDisputePartyB",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1676,7 +1581,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#raiseDisputePartyB",
     "access": "public",
     "description": "Pay the arbitration fee to raise a dispute. To be called by the party B.",
-    "lineNumber": 106,
+    "lineNumber": 63,
     "params": [
       {
         "nullable": null,
@@ -1724,7 +1629,45 @@
     }
   },
   {
-    "__docId__": 90,
+    "__docId__": 85,
+    "kind": "member",
+    "name": "_storeNewDispute",
+    "memberof": "src/abstractWrappers/Disputes.js~Disputes",
+    "static": false,
+    "longname": "src/abstractWrappers/Disputes.js~Disputes#_storeNewDispute",
+    "access": "private",
+    "description": "If there is a dispute in contract update store",
+    "lineNumber": 89,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "contractAddress",
+        "description": ""
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "account",
+        "description": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 86,
     "kind": "member",
     "name": "getDisputesForUser",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1732,7 +1675,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getDisputesForUser",
     "access": "public",
     "description": "Get disputes for user with extra data from arbitrated transaction and store",
-    "lineNumber": 130,
+    "lineNumber": 109,
     "params": [
       {
         "nullable": null,
@@ -1770,15 +1713,15 @@
     }
   },
   {
-    "__docId__": 91,
+    "__docId__": 87,
     "kind": "member",
-    "name": "getDisputesForJuror",
+    "name": "getDisputeContractsForJuror",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
     "static": false,
-    "longname": "src/abstractWrappers/Disputes.js~Disputes#getDisputesForJuror",
+    "longname": "src/abstractWrappers/Disputes.js~Disputes#getDisputeContractsForJuror",
     "access": "public",
     "description": "Get disputes from Kleros contract",
-    "lineNumber": 184,
+    "lineNumber": 163,
     "params": [
       {
         "nullable": null,
@@ -1804,10 +1747,10 @@
     "return": {
       "nullable": null,
       "types": [
-        "int[]"
+        "string[]"
       ],
       "spread": false,
-      "description": "array of dispute id's"
+      "description": "array of contract addresses"
     },
     "type": {
       "types": [
@@ -1816,7 +1759,7 @@
     }
   },
   {
-    "__docId__": 92,
+    "__docId__": 88,
     "kind": "member",
     "name": "getVotesForJuror",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1824,18 +1767,8 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getVotesForJuror",
     "access": "public",
     "description": "Fetch the votes a juror has in a dispute",
-    "lineNumber": 235,
+    "lineNumber": 214,
     "params": [
-      {
-        "nullable": null,
-        "types": [
-          "string"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "arbitratorAddress",
-        "description": "address of the arbitrator contract"
-      },
       {
         "nullable": null,
         "types": [
@@ -1845,6 +1778,16 @@
         "optional": false,
         "name": "disputeId",
         "description": "id of the dispute"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "arbitratorAddress",
+        "description": "address of the arbitrator contract"
       },
       {
         "nullable": null,
@@ -1872,7 +1815,7 @@
     }
   },
   {
-    "__docId__": 93,
+    "__docId__": 89,
     "kind": "member",
     "name": "submitVotesForDispute",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1880,7 +1823,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#submitVotesForDispute",
     "access": "public",
     "description": "Submit votes. Note can only be called during Voting period (Period 2)",
-    "lineNumber": 262,
+    "lineNumber": 241,
     "params": [
       {
         "nullable": null,
@@ -1889,7 +1832,7 @@
         ],
         "spread": false,
         "optional": false,
-        "name": "arbitratorAddress",
+        "name": "contractAddress",
         "description": "address of KlerosPOC contract"
       },
       {
@@ -1948,7 +1891,7 @@
     }
   },
   {
-    "__docId__": 94,
+    "__docId__": 90,
     "kind": "member",
     "name": "getDeadlineForDispute",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -1956,7 +1899,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getDeadlineForDispute",
     "access": "public",
     "description": "get the deadline for dispute",
-    "lineNumber": 302,
+    "lineNumber": 280,
     "params": [
       {
         "nullable": null,
@@ -1994,7 +1937,7 @@
     }
   },
   {
-    "__docId__": 95,
+    "__docId__": 91,
     "kind": "member",
     "name": "_updateStoreForDispute",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -2002,7 +1945,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#_updateStoreForDispute",
     "access": "private",
     "description": "update store with new dispute data",
-    "lineNumber": 324,
+    "lineNumber": 301,
     "params": [
       {
         "nullable": null,
@@ -2011,18 +1954,8 @@
         ],
         "spread": false,
         "optional": false,
-        "name": "arbitratorAddress",
-        "description": "Address address of arbitrator contract"
-      },
-      {
-        "nullable": null,
-        "types": [
-          "int"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "disputeId",
-        "description": "index of dispute"
+        "name": "arbitrableContract",
+        "description": "Address address of arbitrable contract"
       },
       {
         "nullable": null,
@@ -2042,7 +1975,7 @@
     }
   },
   {
-    "__docId__": 96,
+    "__docId__": 92,
     "kind": "member",
     "name": "getUserDisputeFromStore",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -2050,7 +1983,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getUserDisputeFromStore",
     "access": "public",
     "description": "get user data for a dispute from the store",
-    "lineNumber": 391,
+    "lineNumber": 362,
     "params": [
       {
         "nullable": null,
@@ -2059,18 +1992,8 @@
         ],
         "spread": false,
         "optional": false,
-        "name": "arbitratorAddress",
-        "description": "address for arbitrator contract"
-      },
-      {
-        "nullable": null,
-        "types": [
-          "int"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "disputeId",
-        "description": "index of dispute"
+        "name": "arbitrableContract",
+        "description": "Address address for arbitrable contract"
       },
       {
         "nullable": null,
@@ -2080,7 +2003,7 @@
         "spread": false,
         "optional": false,
         "name": "account",
-        "description": "jurors address"
+        "description": "<optional> jurors address"
       }
     ],
     "return": {
@@ -2098,7 +2021,7 @@
     }
   },
   {
-    "__docId__": 97,
+    "__docId__": 93,
     "kind": "member",
     "name": "getEvidenceForArbitrableContract",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -2106,7 +2029,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getEvidenceForArbitrableContract",
     "access": "public",
     "description": "get evidence for contract",
-    "lineNumber": 413,
+    "lineNumber": 384,
     "params": [
       {
         "nullable": null,
@@ -2144,7 +2067,7 @@
     }
   },
   {
-    "__docId__": 98,
+    "__docId__": 94,
     "kind": "member",
     "name": "getDataForDispute",
     "memberof": "src/abstractWrappers/Disputes.js~Disputes",
@@ -2152,7 +2075,7 @@
     "longname": "src/abstractWrappers/Disputes.js~Disputes#getDataForDispute",
     "access": "public",
     "description": "get data for a dispute",
-    "lineNumber": 441,
+    "lineNumber": 411,
     "params": [
       {
         "nullable": null,
@@ -2161,18 +2084,8 @@
         ],
         "spread": false,
         "optional": false,
-        "name": "arbitratorAddress",
-        "description": "Address address for arbitrator contract"
-      },
-      {
-        "nullable": null,
-        "types": [
-          "int"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "disputeId",
-        "description": "index of dispute"
+        "name": "arbitrableContract",
+        "description": "Address address for arbitrable contract"
       },
       {
         "nullable": null,
@@ -2200,7 +2113,7 @@
     }
   },
   {
-    "__docId__": 99,
+    "__docId__": 95,
     "kind": "file",
     "name": "src/contractWrappers/ArbitrableTransactionWrapper.js",
     "content": "import * as _ from 'lodash'\nimport BigNumber from 'bignumber'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport KlerosWrapper from './KlerosWrapper'\nimport arbitrableTransaction from 'kleros-interaction/build/contracts/ArbitrableTransaction'\nimport config from '../../config'\nimport { DISPUTE_STATUS } from '../../constants'\n\n/**\n * ArbitrableTransaction API\n */\nclass ArbitrableTransactionWrapper extends ContractWrapper {\n  /**\n   * Constructor ArbitrableTransaction.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optional)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider)\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Deploy ArbitrableTransaction.\n   * @param {object} account Ethereum account (default account[0])\n   * @param {number} value funds to be placed in contract\n   * @param {string} hashContract Keccak hash of the plain English contract. (default null hashed)\n   * @param {string} arbitratorAddress The address of the arbitrator contract\n   * @param {number} timeout Time after which a party automatically loose a dispute. (default 3600)\n   * @param {string} partyB The recipient of the transaction. (default account[1])\n   * @param {bytes} arbitratorExtraData Extra data for the arbitrator. (default empty string)\n   * @return {object} truffle-contract Object | err The deployed contract or an error\n   */\n  deploy = async (\n      account = this._Web3Wrapper.getAccount(0),\n      value = config.VALUE,\n      hashContract = 0x6aa0bb2779ab006be0739900654a89f1f8a2d7373ed38490a7cbab9c9392e1ff,\n      arbitratorAddress,\n      timeout = 100,\n      partyB = this._Web3Wrapper.getAccount(1),\n      arbitratorExtraData = '',\n    ) => {\n\n    const contractDeployed = await this._deployAsync(\n      account,\n      value,\n      arbitrableTransaction,\n      arbitratorAddress,\n      hashContract,\n      timeout,\n      partyB,\n      arbitratorExtraData\n    )\n\n    this.address = contractDeployed.address\n    this.contractInstance = contractDeployed\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing arbitrableTransaction contract\n   * @param {string} address Contract address\n   * @return {object} contractInstance | Error\n   */\n  load = async address => {\n    // return contract instance if already loaded\n    if (this.contractInstance && this.contractInstance.address === address) return this.contractInstance\n\n    try {\n      const contractInstance = await this._instantiateContractIfExistsAsync(\n        arbitrableTransaction,\n        address\n      )\n\n      this.contractInstance = contractInstance\n      this.address = address\n\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Pay the arbitration fee to raise a dispute. To be called by the party A.\n   * @param {string} account Ethereum account (default account[1])\n   * @param {number} arbitrationCost Amount to pay the arbitrator. (default 10000 wei)\n   * @return {string} txHash hash transaction | Error\n   */\n   payArbitrationFeeByPartyA = async (\n     account = this._Web3Wrapper.getAccount(0),\n     contractAddress, // ethereum address of the contract\n     arbitrationCost = 0.15,\n   ) => {\n     try {\n       this.contractInstance = await this.load(contractAddress)\n       const txHashObj = await this.contractInstance\n         .payArbitrationFeeByPartyA(\n         {\n           from: account,\n           gas: config.GAS,\n           value: this._Web3Wrapper.toWei(arbitrationCost, 'ether'),\n         }\n       )\n\n       return txHashObj.tx\n     } catch (e) {\n       throw new Error(e)\n     }\n   }\n\n  /**\n   * Pay the arbitration fee to raise a dispute. To be called by the party B.\n   * @param {string} account Ethereum account (default account[1])\n   * @param {number} arbitrationCost Amount to pay the arbitrator. (default 10000 wei)\n   * @return {string} txHash hash transaction | Error\n   */\n   payArbitrationFeeByPartyB = async (\n     account = this._Web3Wrapper.getAccount(1),\n     contractAddress, // ethereum address of the contract\n     arbitrationCost = 0.15\n   ) => {\n     try {\n       this.contractInstance = await this.load(contractAddress)\n       const txHashObj = await this.contractInstance\n         .payArbitrationFeeByPartyB(\n         {\n           from: account,\n           gas: config.GAS,\n           value: this._Web3Wrapper.toWei(arbitrationCost, 'ether')\n         }\n       )\n\n       return txHashObj.tx\n     } catch (e) {\n       throw new Error(e)\n     }\n   }\n\n  /**\n  * Submit evidence\n  * @param {string} account ETH address of user\n  * @param {string} contractAddress ETH address of contract\n  * @param {string} name name of evidence\n  * @param {string} description description of evidence\n  * @param {string} evidence A link to an evidence using its URI.\n  * @return {string} txHash Hash transaction\n   */\n  submitEvidence = async (\n    account = this._Web3Wrapper.getAccount(0),\n    contractAddress,\n    name,\n    description = '',\n    url\n  ) => {\n    this.contractInstance = await this.load(contractAddress)\n    const txHashObj = await this.contractInstance\n      .submitEvidence(\n        JSON.stringify(\n          name,\n          description,\n          url\n        ),\n        {\n          from: account,\n          gas: config.GAS,\n          value: 0\n        }\n      )\n\n    return txHashObj.tx\n  }\n\n  /**\n  * Data of the contract\n  * @param {string} account Address of the party.\n  * @param {string} address Address of the ArbitrableTransaction contract.\n  * @return {object} Object Data of the contract.\n  */\n  getData = async (\n    address\n  ) => {\n    const contractInstance = await this.load(address)\n\n    const [\n      arbitrator,\n      // hashContract, // FIXME getter for the hash contract see contractHash see https://github.com/kleros/kleros-interaction/blob/master/test/TwoPartyArbitrable.js#L19\n      extraData,\n      timeout,\n      partyA,\n      partyB,\n      status,\n      arbitratorExtraData,\n      disputeId,\n      partyAFee,\n      partyBFee\n      ] = await Promise.all(\n        [\n          contractInstance.arbitrator.call(),\n          contractInstance.arbitratorExtraData.call(),\n          //  contractInstance.hashContract.call(),\n          contractInstance.timeout.call(),\n          contractInstance.partyA.call(),\n          contractInstance.partyB.call(),\n          contractInstance.status.call(),\n          contractInstance.arbitratorExtraData.call(),\n          contractInstance.disputeID.call(),\n          contractInstance.partyAFee.call(),\n          contractInstance.partyBFee.call(),\n        ]\n      ).catch(err => {\n        throw new Error(err)\n      })\n\n    return {\n      address,\n      arbitrator,\n      extraData,\n      address,\n      timeout: timeout.toNumber(),\n      partyA,\n      partyB,\n      status: status.toNumber(),\n      arbitratorExtraData,\n      disputeId: disputeId.toNumber(),\n      partyAFee: partyAFee.toNumber(),\n      partyBFee: partyBFee.toNumber(),\n    }\n  }\n}\n\nexport default ArbitrableTransactionWrapper\n",
@@ -2211,7 +2124,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 100,
+    "__docId__": 96,
     "kind": "class",
     "name": "ArbitrableTransactionWrapper",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js",
@@ -2229,7 +2142,7 @@
     ]
   },
   {
-    "__docId__": 101,
+    "__docId__": 97,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2264,7 +2177,7 @@
     ]
   },
   {
-    "__docId__": 102,
+    "__docId__": 98,
     "kind": "member",
     "name": "address",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2281,7 +2194,7 @@
     }
   },
   {
-    "__docId__": 103,
+    "__docId__": 99,
     "kind": "member",
     "name": "contractInstance",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2298,7 +2211,7 @@
     }
   },
   {
-    "__docId__": 104,
+    "__docId__": 100,
     "kind": "member",
     "name": "deploy",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2394,7 +2307,7 @@
     }
   },
   {
-    "__docId__": 107,
+    "__docId__": 103,
     "kind": "member",
     "name": "load",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2430,7 +2343,7 @@
     }
   },
   {
-    "__docId__": 110,
+    "__docId__": 106,
     "kind": "member",
     "name": "payArbitrationFeeByPartyA",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2476,7 +2389,7 @@
     }
   },
   {
-    "__docId__": 112,
+    "__docId__": 108,
     "kind": "member",
     "name": "payArbitrationFeeByPartyB",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2522,7 +2435,7 @@
     }
   },
   {
-    "__docId__": 114,
+    "__docId__": 110,
     "kind": "member",
     "name": "submitEvidence",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2598,7 +2511,7 @@
     }
   },
   {
-    "__docId__": 116,
+    "__docId__": 112,
     "kind": "member",
     "name": "getData",
     "memberof": "src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper",
@@ -2644,7 +2557,7 @@
     }
   },
   {
-    "__docId__": 117,
+    "__docId__": 113,
     "kind": "file",
     "name": "src/contractWrappers/BlockHashRNGWrapper.js",
     "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport RNG from 'kleros-interaction/build/contracts/BlockHashRNG'\nimport config from '../../config'\n\n/**\n * Kleros API\n */\nclass BlockHashRNGWrapper extends ContractWrapper {\n  /**\n   * Constructor Kleros.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optionnal)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider)\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Kleros deploy.\n   * @param {string} account (default: accounts[0])\n   * @param {number} value (default: 10000)\n   * @return {object} truffle-contract Object | err The contract object or error deploy\n   */\n  deploy = async (\n      account = this._Web3Wrapper.getAccount(0),\n    ) => {\n    const contractDeployed = await this._deployAsync(\n      account,\n      config.value,\n      RNG\n    )\n\n    this.address = contractDeployed.address\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing contract\n   * @param {string} address contract address\n   * @return {object} Conract Instance | Error\n   */\n  load = async (\n    address\n  ) => {\n    try {\n      const contractInstance = await this._instantiateContractIfExistsAsync(RNG, address)\n      this.contractInstance = contractInstance\n      this.address = address\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n}\n\nexport default BlockHashRNGWrapper\n",
@@ -2655,7 +2568,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 118,
+    "__docId__": 114,
     "kind": "class",
     "name": "BlockHashRNGWrapper",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js",
@@ -2673,7 +2586,7 @@
     ]
   },
   {
-    "__docId__": 119,
+    "__docId__": 115,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper",
@@ -2708,7 +2621,7 @@
     ]
   },
   {
-    "__docId__": 120,
+    "__docId__": 116,
     "kind": "member",
     "name": "address",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper",
@@ -2725,7 +2638,7 @@
     }
   },
   {
-    "__docId__": 121,
+    "__docId__": 117,
     "kind": "member",
     "name": "contractInstance",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper",
@@ -2742,7 +2655,7 @@
     }
   },
   {
-    "__docId__": 122,
+    "__docId__": 118,
     "kind": "member",
     "name": "deploy",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper",
@@ -2788,7 +2701,7 @@
     }
   },
   {
-    "__docId__": 124,
+    "__docId__": 120,
     "kind": "member",
     "name": "load",
     "memberof": "src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper",
@@ -2824,7 +2737,7 @@
     }
   },
   {
-    "__docId__": 127,
+    "__docId__": 123,
     "kind": "file",
     "name": "src/contractWrappers/CentralizedArbitratorWrapper.js",
     "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport ArbitrableTransactionWrapper from './ArbitrableTransactionWrapper'\nimport centralizedArbitrator from 'kleros-interaction/build/contracts/CentralizedArbitrator'\nimport config from '../../config'\n\n/**\n * CentralizedArbitrator API\n */\nclass CentralizedArbitratorWrapper extends ContractWrapper {\n  /**\n   * Constructor CentralizedArbitrator.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optionnal)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider, storeProvider)\n\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Deploy CentralizedArbitrator.\n   * @param {string} account Ethereum account\n   * @param {number} value gas price value\n   * @param {number} priceArbitration Set the initial arbitration price. (default: 10000 wei)\n   * @return {object} truffle-contract Object | err The contract object deployed or an error\n   */\n  deploy = async (\n      account,\n      value = config.VALUE,\n      priceArbitration = 10000\n    ) => {\n\n    const contractDeployed = await this._deployAsync(\n      account,\n      value,\n      centralizedArbitrator,\n      priceArbitration\n    )\n\n    this.address = contractDeployed.address\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing contract\n   * @param {string} address contract address\n   * @return {object} Conract Instance | Error\n   */\n  load = async (\n    address\n  ) => {\n    try {\n      const contractInstance = await this._instantiateContractIfExistsAsync(centralizedArbitrator, address)\n      this.contractInstance = contractInstance\n      this.address = address\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n}\n\nexport default CentralizedArbitratorWrapper\n",
@@ -2835,7 +2748,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 128,
+    "__docId__": 124,
     "kind": "class",
     "name": "CentralizedArbitratorWrapper",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js",
@@ -2853,7 +2766,7 @@
     ]
   },
   {
-    "__docId__": 129,
+    "__docId__": 125,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper",
@@ -2888,7 +2801,7 @@
     ]
   },
   {
-    "__docId__": 130,
+    "__docId__": 126,
     "kind": "member",
     "name": "address",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper",
@@ -2905,7 +2818,7 @@
     }
   },
   {
-    "__docId__": 131,
+    "__docId__": 127,
     "kind": "member",
     "name": "contractInstance",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper",
@@ -2922,7 +2835,7 @@
     }
   },
   {
-    "__docId__": 132,
+    "__docId__": 128,
     "kind": "member",
     "name": "deploy",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper",
@@ -2978,7 +2891,7 @@
     }
   },
   {
-    "__docId__": 134,
+    "__docId__": 130,
     "kind": "member",
     "name": "load",
     "memberof": "src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper",
@@ -3014,10 +2927,10 @@
     }
   },
   {
-    "__docId__": 137,
+    "__docId__": 133,
     "kind": "file",
     "name": "src/contractWrappers/ContractWrapper.js",
-    "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport config from '../../config'\n\n/**\n * Contract wrapper\n */\nclass ContractWrapper {\n  /**\n   * Constructor contract wrapper\n   * @param {object} web3Wrapper instance\n   */\n  constructor(web3Wrapper) {\n    this._Web3Wrapper = web3Wrapper\n  }\n\n  /**\n   * Instantiate contract.\n   * @private\n   * @param {object} artifact\n   * @param {string} address    The hex encoded contract Ethereum address\n   * @return {object} truffle-contract object | Error\n   */\n  _instantiateContractIfExistsAsync = async (artifact, address) => {\n    const c = await contract(artifact)\n\n    const providerObj = await this._Web3Wrapper.getProvider()\n\n    await c.setProvider(providerObj)\n\n    try {\n      const contractInstance = _.isUndefined(address)\n                              ? await c.deployed()\n                              : await c.at(address)\n\n      return contractInstance\n    } catch (err) {\n      const errMsg = `${err}`\n\n      if (_.includes(errMsg, 'not been deployed to detected network')) {\n        throw new Error('ContractDoesNotExist')\n      } else {\n        throw new Error('UnhandledError')\n      }\n    }\n  }\n\n  /**\n   * Deploy contract.\n   * @param {string} account\n   * @param {number} value\n   * @param {object} artifact json artifact of the contract\n   * @param rest arguments\n   * @return {object} truffle-contract Object | err The contract object or an error\n   */\n  _deployAsync = async (account, value, artifact, ...args) => {\n    if (_.isEmpty(account)) {\n      account = this._Web3Wrapper.getAccount(0)\n    }\n\n    const MyContract = contract({\n      abi: artifact.abi,\n      unlinked_binary: artifact.bytecode ? artifact.bytecode : artifact.unlinked_binary\n    })\n\n    const provider = await this._Web3Wrapper.getProvider()\n    MyContract.setProvider(provider)\n    try {\n      let contractDeployed = await MyContract.new(\n        ...args,\n        {\n          from: account,\n          value: value,\n          gas: config.GAS,\n        }\n      )\n      return contractDeployed\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  _getCurrentBlockNumber = () => {\n    return this._Web3Wrapper.blockNumber()\n  }\n}\n\nexport default ContractWrapper\n",
+    "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport config from '../../config'\n\n/**\n * Contract wrapper\n */\nclass ContractWrapper {\n  /**\n   * Constructor contract wrapper\n   * @param {object} web3Wrapper instance\n   */\n  constructor(web3Wrapper) {\n    this._Web3Wrapper = web3Wrapper\n  }\n\n  /**\n   * Instantiate contract.\n   * @private\n   * @param {object} artifact\n   * @param {string} address    The hex encoded contract Ethereum address\n   * @return {object} truffle-contract object | Error\n   */\n  _instantiateContractIfExistsAsync = async (artifact, address) => {\n    const c = await contract(artifact)\n\n    const providerObj = await this._Web3Wrapper.getProvider()\n\n    await c.setProvider(providerObj)\n\n    try {\n      const contractInstance = _.isUndefined(address)\n                              ? await c.deployed()\n                              : await c.at(address)\n\n      return contractInstance\n    } catch (err) {\n      const errMsg = `${err}`\n\n      if (_.includes(errMsg, 'not been deployed to detected network')) {\n        throw new Error('ContractDoesNotExist')\n      } else {\n        throw new Error('UnhandledError')\n      }\n    }\n  }\n\n  /**\n   * Deploy contract.\n   * @param {string} account\n   * @param {number} value\n   * @param {object} artifact json artifact of the contract\n   * @param rest arguments\n   * @return {object} truffle-contract Object | err The contract object or an error\n   */\n  _deployAsync = async (account, value, artifact, ...args) => {\n    if (_.isEmpty(account)) {\n      account = this._Web3Wrapper.getAccount(0)\n    }\n\n    const MyContract = contract({\n      abi: artifact.abi,\n      unlinked_binary: artifact.unlinked_binary,\n    })\n\n    const provider = await this._Web3Wrapper.getProvider()\n    MyContract.setProvider(provider)\n    try {\n      let contractDeployed = await MyContract.new(\n        ...args,\n        {\n          from: account,\n          value: value,\n          gas: config.GAS,\n        }\n      )\n      return contractDeployed\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n}\n\nexport default ContractWrapper\n",
     "static": true,
     "longname": "/Users/samvitello/work/kleros/kleros-api/src/contractWrappers/ContractWrapper.js",
     "access": "public",
@@ -3025,7 +2938,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 138,
+    "__docId__": 134,
     "kind": "class",
     "name": "ContractWrapper",
     "memberof": "src/contractWrappers/ContractWrapper.js",
@@ -3040,7 +2953,7 @@
     "interface": false
   },
   {
-    "__docId__": 139,
+    "__docId__": 135,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/ContractWrapper.js~ContractWrapper",
@@ -3065,7 +2978,7 @@
     ]
   },
   {
-    "__docId__": 140,
+    "__docId__": 136,
     "kind": "member",
     "name": "_Web3Wrapper",
     "memberof": "src/contractWrappers/ContractWrapper.js~ContractWrapper",
@@ -3082,7 +2995,7 @@
     }
   },
   {
-    "__docId__": 141,
+    "__docId__": 137,
     "kind": "member",
     "name": "_instantiateContractIfExistsAsync",
     "memberof": "src/contractWrappers/ContractWrapper.js~ContractWrapper",
@@ -3128,7 +3041,7 @@
     }
   },
   {
-    "__docId__": 142,
+    "__docId__": 138,
     "kind": "member",
     "name": "_deployAsync",
     "memberof": "src/contractWrappers/ContractWrapper.js~ContractWrapper",
@@ -3194,27 +3107,10 @@
     }
   },
   {
-    "__docId__": 143,
-    "kind": "member",
-    "name": "_getCurrentBlockNumber",
-    "memberof": "src/contractWrappers/ContractWrapper.js~ContractWrapper",
-    "static": false,
-    "longname": "src/contractWrappers/ContractWrapper.js~ContractWrapper#_getCurrentBlockNumber",
-    "access": "private",
-    "description": null,
-    "lineNumber": 83,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 144,
+    "__docId__": 139,
     "kind": "file",
     "name": "src/contractWrappers/KlerosWrapper.js",
-    "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport ArbitrableTransactionWrapper from './ArbitrableTransactionWrapper'\nimport kleros from 'kleros/build/contracts/KlerosPOC'\nimport config from '../../config'\nimport disputes from './mockDisputes'\nimport { VOTING_PERIOD, DISPUTE_STATE_INDEX } from '../../constants'\n\n/**\n * Kleros API\n */\nclass KlerosWrapper extends ContractWrapper {\n  /**\n   * Constructor Kleros.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optionnal)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider)\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Kleros deploy.\n   * @param {string} rngAddress address of random number generator contract\n   * @param {string} pnkAddress address of pinakion contract\n   * @param {number[]} timesPerPeriod array of 5 ints indicating the time limit for each period of contract\n   * @param {string} account address of user\n   * @param {number} value (default: 10000)\n   * @return {object} truffle-contract Object | err The contract object or error deploy\n   */\n  deploy = async (\n      rngAddress,\n      pnkAddress,\n      timesPerPeriod = [1,1,1,1,1],\n      account = this._Web3Wrapper.getAccount(0),\n      value = config.VALUE,\n    ) => {\n\n    const contractDeployed = await this._deployAsync(\n      account,\n      value,\n      kleros,\n      pnkAddress,\n      rngAddress,\n      timesPerPeriod\n    )\n\n    this.address = contractDeployed.address\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing contract\n   * @param {string} address contract address\n   * @return {object} Conract Instance | Error\n   */\n  load = async (\n    address\n  ) => {\n    // return contract instance if already loaded\n    if (this.contractInstance && this.contractInstance.address === address) return this.contractInstance\n\n    try {\n      // instantiate new contract instance from address\n      const contractInstance = await this._instantiateContractIfExistsAsync(kleros, address)\n      this.contractInstance = contractInstance\n      this.address = address\n\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Use Arbitrator.buyPNK\n   * @param {string} amount number of pinakion to buy\n   * @param {string} contractAddress address of klerosPOC contract\n   * @param {string} account address of user\n   * @return {object} txHash\n   */\n  buyPNK = async (\n    amount,\n    contractAddress, // address of KlerosPOC\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      const txHashObj = await this.contractInstance.buyPinakion(\n        {\n          from: account,\n          gas: config.GAS,\n          value: this._Web3Wrapper.toWei(amount, 'ether'),\n        }\n      )\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} balance information including total PNK balance and activated tokens\n   */\n  getPNKBalance = async (\n    contractAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const juror = await contractInstance.jurors(account)\n    if (!juror) throw new Error(`${account} is not a juror for contract ${contractAddress}`)\n\n    // total tokens stored in contract\n    const contractBalance = this._Web3Wrapper.fromWei(juror[0].toNumber(), 'ether')\n    // tokens activated in court session\n    const currentSession = await contractInstance.session.call()\n    let activatedTokens = 0\n    if (juror[2].toNumber() === currentSession.toNumber()) {\n      activatedTokens = this._Web3Wrapper.fromWei((juror[4].toNumber() - juror[3].toNumber()), 'ether')\n    }\n    // tokens locked into disputes\n    const lockedTokens = this._Web3Wrapper.fromWei(juror[2].toNumber(), 'ether')\n\n    return {\n      activatedTokens,\n      lockedTokens,\n      tokenBalance: contractBalance\n    }\n  }\n\n  /**\n   * Activate Pinakion tokens to be eligible to be a juror\n   * @param {string} amount number of tokens to activate\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} PNK balance\n   */\n  activatePNK = async (\n    amount, // amount in ether\n    contractAddress, // klerosPOC contract address\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      await this.contractInstance.activateTokens(\n        this._Web3Wrapper.toWei(amount, 'ether'),\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n    } catch (e) {\n      throw new Error(e)\n    }\n\n    return this.getPNKBalance(\n      contractAddress,\n      account\n    )\n  }\n\n  /**\n  * Fetch the cost of arbitration\n  * @param {string} contractAddress address of kleros POC contract\n  * @param {bytes} contractExtraData extra data from arbitrable contract\n  * @return {number} cost of arbitration\n  */\n  getArbitrationCost = async (\n    contractAddress,\n    contractExtraData\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    try {\n      const arbitrationCost = await contractInstance.arbitrationCost(contractExtraData)\n\n      return arbitrationCost.toNumber()\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Call contract to move on to the next period\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} data for kleros POC\n   */\n  passPeriod = async (\n    contractAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      await contractInstance.passPeriod(\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n    } catch (e) {\n      throw new Error(e)\n    }\n\n    return this.getData(contractAddress)\n  }\n\n  /**\n   * Submit votes. Note can only be called during Voting period (Period 2)\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {number} ruling int representing the jurors decision\n   * @param {number[]} votes int[] of drawn votes for dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  submitVotes = async (\n    contractAddress,\n    disputeId,\n    ruling,\n    votes,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    try {\n      const txHashObj = await contractInstance.voteRuling(\n        disputeId,\n        ruling,\n        votes,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Appeal ruling on dispute\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  appealRuling = async (\n    contractAddress,\n    disputeId,\n    extraData,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    const appealFee = await contractInstance.appealCost(disputeId, extraData)\n    try {\n      const appealTxHash = await this.contractInstance.appeal(\n        disputeId,\n        extraData,\n        {\n          from: account,\n          value: appealFee,\n          gas: config.GAS\n        }\n      )\n\n      return appealTxHash.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Repartition juror tokens\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  repartitionJurorTokens = async (\n    contractAddress,\n    disputeId,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      // partition tokens\n      const repartitionTxHash = await contractInstance.oneShotTokenRepartition(\n        disputeId,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return repartitionTxHash.tx\n    } catch (e) {\n      throw e\n    }\n  }\n\n  /**\n   * Execute ruling on dispute\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  executeRuling = async (\n    contractAddress,\n    disputeId,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      // execute ruling\n      const executeTxHash = await this.contractInstance.executeRuling(\n        disputeId,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return executeTxHash.tx\n    } catch (e) {\n      throw e\n    }\n  }\n\n  /**\n  * Get time for a period\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} periodNumber int representing period\n  * @return {number} seconds in the period\n  */\n  getTimeForPeriod = async (\n    contractAddress,\n    periodNumber\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const timePerPeriod = await contractInstance.timePerPeriod(periodNumber)\n\n    if (timePerPeriod) {\n      return timePerPeriod.toNumber()\n    } else {\n      throw new Error(`Period ${periodNumber} does not have a time associated with it. periodNumber out of range`)\n    }\n  }\n\n  /**\n  * Get dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} disputeId index of dispute\n  * @return {object} dispute data from contract\n  */\n  getDispute = async (\n    contractAddress,\n    disputeId\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      const dispute = await contractInstance.disputes(disputeId)\n      return {\n        arbitratedContract: dispute[0],\n        firstSession: dispute[1].toNumber(),\n        numberOfAppeals: dispute[2].toNumber(),\n        rulingChoices: dispute[3].toNumber(),\n        initialNumberJurors: dispute[4].toNumber(),\n        arbitrationFeePerJuror: dispute[5].toNumber(),\n        state: dispute[6].toNumber()\n      }\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} disputeId index of dispute\n  * @return {number} number of jurors for a dispute\n  */\n  getAmountOfJurorsForDispute = async (\n    contractAddress,\n    disputeId\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const amountOfJurors = await contractInstance.amountJurors(disputeId)\n\n    if (amountOfJurors) {\n      return amountOfJurors.toNumber()\n    } else {\n      throw new Error(`Dispute ${disputeId} does not exist`)\n    }\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {number} disputeId index of dispute\n  * @param {number} draw int for draw\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {string} jurorAddress address of juror\n  * @return {bool} true indicates juror has a vote for draw, false indicates they do not\n  */\n  isJurorDrawnForDispute = async (\n    disputeId,\n    draw,\n    contractAddress,\n    jurorAddress = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const isDrawn = await contractInstance.isDrawn(disputeId, jurorAddress, draw)\n\n    return isDrawn\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {number} disputeId index of dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @return {number} int indicating the ruling of the dispute\n  */\n  currentRulingForDispute = async (\n    contractAddress,\n    disputeId,\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentRuling = await contractInstance.currentRuling(disputeId)\n\n    return currentRuling.toNumber()\n  }\n\n  getPeriod = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentPeriod = await contractInstance.period()\n\n    return currentPeriod.toNumber()\n  }\n\n  getSession = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentSession = await contractInstance.session()\n\n    return currentSession.toNumber()\n  }\n\n  /**\n   * Get data from Kleros contract\n   * TODO split these into their own methods for more flexability and speed\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} data for kleros POC from contract\n   */\n  getData = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const [\n      pinakionContractAddress,\n      rngContractAddress,\n      period,\n      session,\n      lastPeriodChange\n    ] = await Promise.all([\n      contractInstance.pinakion(),\n      contractInstance.rng(),\n      contractInstance.period(),\n      contractInstance.session(),\n      contractInstance.lastPeriodChange(),\n    ]).catch(err => {\n      throw new Error(err)\n    })\n\n    return {\n      pinakionContractAddress,\n      rngContractAddress,\n      period: period.toNumber(),\n      session: session.toNumber(),\n      lastPeriodChange: lastPeriodChange.toNumber(),\n    }\n  }\n}\n\nexport default KlerosWrapper\n",
+    "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport ArbitrableTransactionWrapper from './ArbitrableTransactionWrapper'\nimport kleros from 'kleros/build/contracts/KlerosPOC'\nimport config from '../../config'\nimport disputes from './mockDisputes'\nimport { VOTING_PERIOD, DISPUTE_STATE_INDEX } from '../../constants'\n\n/**\n * Kleros API\n */\nclass KlerosWrapper extends ContractWrapper {\n  /**\n   * Constructor Kleros.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optionnal)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider)\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Kleros deploy.\n   * @param {string} rngAddress address of random number generator contract\n   * @param {string} pnkAddress address of pinakion contract\n   * @param {number[]} timesPerPeriod array of 5 ints indicating the time limit for each period of contract\n   * @param {string} account address of user\n   * @param {number} value (default: 10000)\n   * @return {object} truffle-contract Object | err The contract object or error deploy\n   */\n  deploy = async (\n      rngAddress,\n      pnkAddress,\n      timesPerPeriod = [1,1,1,1,1],\n      account = this._Web3Wrapper.getAccount(0),\n      value = config.VALUE,\n    ) => {\n\n    const contractDeployed = await this._deployAsync(\n      account,\n      value,\n      kleros,\n      pnkAddress,\n      rngAddress,\n      timesPerPeriod\n    )\n\n    this.address = contractDeployed.address\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing contract\n   * @param {string} address contract address\n   * @return {object} Conract Instance | Error\n   */\n  load = async (\n    address\n  ) => {\n    // return contract instance if already loaded\n    if (this.contractInstance && this.contractInstance.address === address) return this.contractInstance\n\n    try {\n      // instantiate new contract instance from address\n      const contractInstance = await this._instantiateContractIfExistsAsync(kleros, address)\n      this.contractInstance = contractInstance\n      this.address = address\n\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Use Arbitrator.buyPNK\n   * @param {string} amount number of pinakion to buy\n   * @param {string} contractAddress address of klerosPOC contract\n   * @param {string} account address of user\n   * @return {object} txHash\n   */\n  buyPNK = async (\n    amount,\n    contractAddress, // address of KlerosPOC\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      const txHashObj = await this.contractInstance.buyPinakion(\n        {\n          from: account,\n          gas: config.GAS,\n          value: this._Web3Wrapper.toWei(amount, 'ether'),\n        }\n      )\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} balance information including total PNK balance and activated tokens\n   */\n  getPNKBalance = async (\n    contractAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const juror = await contractInstance.jurors(account)\n    if (!juror) throw new Error(`${account} is not a juror for contract ${contractAddress}`)\n\n    // total tokens stored in contract\n    const contractBalance = this._Web3Wrapper.fromWei(juror[0].toNumber(), 'ether')\n    // tokens activated in court session\n    const currentSession = await contractInstance.session.call()\n    let activatedTokens = 0\n    if (juror[2].toNumber() === currentSession.toNumber()) {\n      activatedTokens = this._Web3Wrapper.fromWei((juror[4].toNumber() - juror[3].toNumber()), 'ether')\n    }\n    // tokens locked into disputes\n    const lockedTokens = this._Web3Wrapper.fromWei(juror[2].toNumber(), 'ether')\n\n    return {\n      activatedTokens,\n      lockedTokens,\n      tokenBalance: contractBalance\n    }\n  }\n\n  /**\n   * Activate Pinakion tokens to be eligible to be a juror\n   * @param {string} amount number of tokens to activate\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} PNK balance\n   */\n  activatePNK = async (\n    amount, // amount in ether\n    contractAddress, // klerosPOC contract address\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      await this.contractInstance.activateTokens(\n        this._Web3Wrapper.toWei(amount, 'ether'),\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n    } catch (e) {\n      throw new Error(e)\n    }\n\n    return this.getPNKBalance(\n      contractAddress,\n      account\n    )\n  }\n\n  /**\n  * Fetch the cost of arbitration\n  * @param {string} contractAddress address of kleros POC contract\n  * @param {bytes} contractExtraData extra data from arbitrable contract\n  * @return {number} cost of arbitration\n  */\n  getArbitrationCost = async (\n    contractAddress,\n    contractExtraData\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    try {\n      const arbitrationCost = await contractInstance.arbitrationCost(contractExtraData)\n\n      return arbitrationCost.toNumber()\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Call contract to move on to the next period\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} data for kleros POC\n   */\n  passPeriod = async (\n    contractAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      await contractInstance.passPeriod(\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n    } catch (e) {\n      throw new Error(e)\n    }\n\n    return this.getData(contractAddress)\n  }\n\n  /**\n   * Submit votes. Note can only be called during Voting period (Period 2)\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {number} ruling int representing the jurors decision\n   * @param {number[]} votes int[] of drawn votes for dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  submitVotes = async (\n    contractAddress,\n    disputeId,\n    ruling,\n    votes,\n    hash,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    try {\n      const txHashObj = await contractInstance.voteRuling(\n        disputeId,\n        ruling,\n        votes,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Appeal ruling on dispute\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  appealRuling = async (\n    contractAddress,\n    disputeId,\n    extraData,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    const appealFee = await contractInstance.appealCost(disputeId, extraData)\n    try {\n      const appealTxHash = await this.contractInstance.appeal(\n        disputeId,\n        extraData,\n        {\n          from: account,\n          value: appealFee,\n          gas: config.GAS\n        }\n      )\n\n      return appealTxHash.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n   * Repartition juror tokens\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  repartitionJurorTokens = async (\n    contractAddress,\n    disputeId,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      // partition tokens\n      const repartitionTxHash = await contractInstance.oneShotTokenRepartition(\n        disputeId,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return repartitionTxHash.tx\n    } catch (e) {\n      throw e\n    }\n  }\n\n  /**\n   * Execute ruling on dispute\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {number} disputeId index of the dispute\n   * @param {string} account address of user\n   * @return {string} tx hash\n   */\n  executeRuling = async (\n    contractAddress,\n    disputeId,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      // execute ruling\n      const executeTxHash = await this.contractInstance.executeRuling(\n        disputeId,\n        {\n          from: account,\n          gas: config.GAS\n        }\n      )\n\n      return executeTxHash.tx\n    } catch (e) {\n      throw e\n    }\n  }\n\n  /**\n  * Get time for a period\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} periodNumber int representing period\n  * @return {number} seconds in the period\n  */\n  getTimeForPeriod = async (\n    contractAddress,\n    periodNumber\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const timePerPeriod = await contractInstance.timePerPeriod(periodNumber)\n\n    if (timePerPeriod) {\n      return timePerPeriod.toNumber()\n    } else {\n      throw new Error(`Period ${periodNumber} does not have a time associated with it. periodNumber out of range`)\n    }\n  }\n\n  /**\n  * Get dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} disputeId index of dispute\n  * @return {object} dispute data from contract\n  */\n  getDispute = async (\n    contractAddress,\n    disputeId\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n    try {\n      const dispute = await contractInstance.disputes(disputeId)\n      return {\n        arbitratedContract: dispute[0],\n        firstSession: dispute[1].toNumber(),\n        numberOfAppeals: dispute[2].toNumber(),\n        rulingChoices: dispute[3].toNumber(),\n        initialNumberJurors: dispute[4].toNumber(),\n        arbitrationFeePerJuror: dispute[5].toNumber(),\n        state: dispute[6].toNumber()\n      }\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {number} disputeId index of dispute\n  * @return {number} number of jurors for a dispute\n  */\n  getAmountOfJurorsForDispute = async (\n    contractAddress,\n    disputeId\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const amountOfJurors = await contractInstance.amountJurors(disputeId)\n\n    if (amountOfJurors) {\n      return amountOfJurors.toNumber()\n    } else {\n      throw new Error(`Dispute ${disputeId} does not exist`)\n    }\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {number} disputeId index of dispute\n  * @param {number} draw int for draw\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @param {string} jurorAddress address of juror\n  * @return {bool} true indicates juror has a vote for draw, false indicates they do not\n  */\n  isJurorDrawnForDispute = async (\n    disputeId,\n    draw,\n    contractAddress,\n    jurorAddress = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const isDrawn = await contractInstance.isDrawn(disputeId, jurorAddress, draw)\n\n    return isDrawn\n  }\n\n  /**\n  * Get number of jurors for a dispute\n  * @param {number} disputeId index of dispute\n  * @param {string} contractAddress address of KlerosPOC contract\n  * @return {number} int indicating the ruling of the dispute\n  */\n  currentRulingForDispute = async (\n    disputeId,\n    contractAddress,\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentRuling = await contractInstance.currentRuling(disputeId)\n\n    return currentRuling.toNumber()\n  }\n\n  getPeriod = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentPeriod = await contractInstance.period()\n\n    return currentPeriod.toNumber()\n  }\n\n  getSession = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const currentSession = await contractInstance.session()\n\n    return currentSession.toNumber()\n  }\n\n  /**\n   * Get data from Kleros contract\n   * TODO split these into their own methods for more flexability and speed\n   * @param {string} contractAddress address of KlerosPOC contract\n   * @param {string} account address of user\n   * @return {object} data for kleros POC from contract\n   */\n  getData = async (\n    contractAddress\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const [\n      pinakionContractAddress,\n      rngContractAddress,\n      period,\n      session,\n      lastPeriodChange\n    ] = await Promise.all([\n      contractInstance.pinakion(),\n      contractInstance.rng(),\n      contractInstance.period(),\n      contractInstance.session(),\n      contractInstance.lastPeriodChange(),\n    ]).catch(err => {\n      throw new Error(err)\n    })\n\n    return {\n      pinakionContractAddress,\n      rngContractAddress,\n      period: period.toNumber(),\n      session: session.toNumber(),\n      lastPeriodChange: lastPeriodChange.toNumber(),\n    }\n  }\n}\n\nexport default KlerosWrapper\n",
     "static": true,
     "longname": "/Users/samvitello/work/kleros/kleros-api/src/contractWrappers/KlerosWrapper.js",
     "access": "public",
@@ -3222,7 +3118,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 145,
+    "__docId__": 140,
     "kind": "class",
     "name": "KlerosWrapper",
     "memberof": "src/contractWrappers/KlerosWrapper.js",
@@ -3240,7 +3136,7 @@
     ]
   },
   {
-    "__docId__": 146,
+    "__docId__": 141,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3275,7 +3171,7 @@
     ]
   },
   {
-    "__docId__": 147,
+    "__docId__": 142,
     "kind": "member",
     "name": "address",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3292,7 +3188,7 @@
     }
   },
   {
-    "__docId__": 148,
+    "__docId__": 143,
     "kind": "member",
     "name": "contractInstance",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3309,7 +3205,7 @@
     }
   },
   {
-    "__docId__": 149,
+    "__docId__": 144,
     "kind": "member",
     "name": "deploy",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3385,7 +3281,7 @@
     }
   },
   {
-    "__docId__": 151,
+    "__docId__": 146,
     "kind": "member",
     "name": "load",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3421,7 +3317,7 @@
     }
   },
   {
-    "__docId__": 154,
+    "__docId__": 149,
     "kind": "member",
     "name": "buyPNK",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3477,7 +3373,7 @@
     }
   },
   {
-    "__docId__": 155,
+    "__docId__": 150,
     "kind": "member",
     "name": "getPNKBalance",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3523,7 +3419,7 @@
     }
   },
   {
-    "__docId__": 156,
+    "__docId__": 151,
     "kind": "member",
     "name": "activatePNK",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3579,7 +3475,7 @@
     }
   },
   {
-    "__docId__": 157,
+    "__docId__": 152,
     "kind": "member",
     "name": "getArbitrationCost",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3625,7 +3521,7 @@
     }
   },
   {
-    "__docId__": 158,
+    "__docId__": 153,
     "kind": "member",
     "name": "passPeriod",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3671,7 +3567,7 @@
     }
   },
   {
-    "__docId__": 159,
+    "__docId__": 154,
     "kind": "member",
     "name": "submitVotes",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3747,7 +3643,7 @@
     }
   },
   {
-    "__docId__": 160,
+    "__docId__": 155,
     "kind": "member",
     "name": "appealRuling",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3755,7 +3651,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#appealRuling",
     "access": "public",
     "description": "Appeal ruling on dispute",
-    "lineNumber": 259,
+    "lineNumber": 260,
     "params": [
       {
         "nullable": null,
@@ -3803,7 +3699,7 @@
     }
   },
   {
-    "__docId__": 161,
+    "__docId__": 156,
     "kind": "member",
     "name": "repartitionJurorTokens",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3811,7 +3707,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#repartitionJurorTokens",
     "access": "public",
     "description": "Repartition juror tokens",
-    "lineNumber": 291,
+    "lineNumber": 292,
     "params": [
       {
         "nullable": null,
@@ -3859,7 +3755,7 @@
     }
   },
   {
-    "__docId__": 162,
+    "__docId__": 157,
     "kind": "member",
     "name": "executeRuling",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3867,7 +3763,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#executeRuling",
     "access": "public",
     "description": "Execute ruling on dispute",
-    "lineNumber": 320,
+    "lineNumber": 321,
     "params": [
       {
         "nullable": null,
@@ -3915,7 +3811,7 @@
     }
   },
   {
-    "__docId__": 163,
+    "__docId__": 158,
     "kind": "member",
     "name": "getTimeForPeriod",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3923,7 +3819,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getTimeForPeriod",
     "access": "public",
     "description": "Get time for a period",
-    "lineNumber": 348,
+    "lineNumber": 349,
     "params": [
       {
         "nullable": null,
@@ -3961,7 +3857,7 @@
     }
   },
   {
-    "__docId__": 164,
+    "__docId__": 159,
     "kind": "member",
     "name": "getDispute",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -3969,7 +3865,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getDispute",
     "access": "public",
     "description": "Get dispute",
-    "lineNumber": 369,
+    "lineNumber": 370,
     "params": [
       {
         "nullable": null,
@@ -4007,7 +3903,7 @@
     }
   },
   {
-    "__docId__": 165,
+    "__docId__": 160,
     "kind": "member",
     "name": "getAmountOfJurorsForDispute",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4015,7 +3911,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getAmountOfJurorsForDispute",
     "access": "public",
     "description": "Get number of jurors for a dispute",
-    "lineNumber": 396,
+    "lineNumber": 397,
     "params": [
       {
         "nullable": null,
@@ -4053,7 +3949,7 @@
     }
   },
   {
-    "__docId__": 166,
+    "__docId__": 161,
     "kind": "member",
     "name": "isJurorDrawnForDispute",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4061,7 +3957,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#isJurorDrawnForDispute",
     "access": "public",
     "description": "Get number of jurors for a dispute",
-    "lineNumber": 419,
+    "lineNumber": 420,
     "params": [
       {
         "nullable": null,
@@ -4119,7 +4015,7 @@
     }
   },
   {
-    "__docId__": 167,
+    "__docId__": 162,
     "kind": "member",
     "name": "currentRulingForDispute",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4127,7 +4023,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#currentRulingForDispute",
     "access": "public",
     "description": "Get number of jurors for a dispute",
-    "lineNumber": 438,
+    "lineNumber": 439,
     "params": [
       {
         "nullable": null,
@@ -4165,7 +4061,7 @@
     }
   },
   {
-    "__docId__": 168,
+    "__docId__": 163,
     "kind": "member",
     "name": "getPeriod",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4173,7 +4069,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getPeriod",
     "access": "public",
     "description": null,
-    "lineNumber": 449,
+    "lineNumber": 450,
     "undocument": true,
     "type": {
       "types": [
@@ -4182,7 +4078,7 @@
     }
   },
   {
-    "__docId__": 169,
+    "__docId__": 164,
     "kind": "member",
     "name": "getSession",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4190,7 +4086,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getSession",
     "access": "public",
     "description": null,
-    "lineNumber": 459,
+    "lineNumber": 460,
     "undocument": true,
     "type": {
       "types": [
@@ -4199,7 +4095,7 @@
     }
   },
   {
-    "__docId__": 170,
+    "__docId__": 165,
     "kind": "member",
     "name": "getData",
     "memberof": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper",
@@ -4207,7 +4103,7 @@
     "longname": "src/contractWrappers/KlerosWrapper.js~KlerosWrapper#getData",
     "access": "public",
     "description": "Get data from Kleros contract\nTODO split these into their own methods for more flexability and speed",
-    "lineNumber": 476,
+    "lineNumber": 477,
     "params": [
       {
         "nullable": null,
@@ -4245,7 +4141,7 @@
     }
   },
   {
-    "__docId__": 171,
+    "__docId__": 166,
     "kind": "file",
     "name": "src/contractWrappers/PinakionWrapper.js",
     "content": "import * as _ from 'lodash'\nimport contract from 'truffle-contract'\nimport ContractWrapper from './ContractWrapper'\nimport PinakionPOC from 'kleros/build/contracts/PinakionPOC' // FIXME mock\nimport config from '../../config'\n\n/**\n * Kleros API\n */\nclass PinakionWrapper extends ContractWrapper {\n  /**\n   * Constructor Kleros.\n   * @param {object} web3 instance\n   * @param {string} address of the contract (optionnal)\n   */\n  constructor(web3Provider, address) {\n    super(web3Provider)\n    if (!_.isUndefined(address)) {\n      this.address = address\n    }\n    this.contractInstance = null\n  }\n\n  /**\n   * Kleros deploy.\n   * @param {string} account (default: accounts[0])\n   * @return {object} truffle-contract Object | err The contract object or error deploy\n   */\n  deploy = async (\n      account = this._Web3Wrapper.getAccount(0),\n    ) => {\n\n    const contractDeployed = await this._deployAsync(\n      account,\n      config.value,\n      PinakionPOC\n    )\n\n    this.address = contractDeployed.address\n\n    return contractDeployed\n  }\n\n  /**\n   * Load an existing contract\n   * @param {string} address contract address\n   * @return {object} Conract Instance | Error\n   */\n  load = async (\n    address\n  ) => {\n    try {\n      const contractInstance = await this._instantiateContractIfExistsAsync(PinakionPOC, address)\n      this.contractInstance = contractInstance\n      this.address = address\n\n      return contractInstance\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n  \n  /**\n  * change the kleros contract in the PNK contract\n  * @param {string} contractAddress address of PNK contract\n  * @param {string} klerosAddress address of Kleros POC contract\n  * @param {string} account address of user\n  * @return {string} tx hash\n  */ \n  setKleros = async (\n    contractAddress,\n    klerosAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    try {\n      let contractInstance = await this.load(contractAddress)\n      const txHashObj = await contractInstance.setKleros(\n        klerosAddress,\n        {\n          from: account,\n          gas: config.GAS,\n        }\n      )\n\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n  \n  /**\n  * transfer ownership of the PNK contract to the kleros POC contract\n  * @param {string} contractAddress address of PNK contract\n  * @param {string} klerosAddress address of Kleros POC contract\n  * @param {string} account address of user\n  * @return {string} tx hash\n  */ \n  transferOwnership = async (\n    contractAddress,\n    klerosAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    try {\n      const contractInstance = await this.load(contractAddress)\n      const txHashObj = await contractInstance.transferOwnership(\n        klerosAddress,\n        {\n          from: account,\n          gas: config.GAS,\n        }\n      )\n\n      return txHashObj.tx\n    } catch (e) {\n      throw new Error(e)\n    }\n  }\n  \n  /**\n  * Get data from PNK contract\n  * @param {string} contractAddress address of PNK contract\n  * @param {string} account address for user\n  * @return {object} data from PNK contract\n  */ \n  getData = async (\n    contractAddress,\n    account = this._Web3Wrapper.getAccount(0)\n  ) => {\n    const contractInstance = await this.load(contractAddress)\n\n    const [\n      owner,\n      kleros\n    ] = await Promise.all([\n      contractInstance.owner.call(),\n      contractInstance.kleros.call()\n    ]).catch(err => {\n      throw new Error(err)\n    })\n\n    return {\n      owner,\n      kleros\n    }\n  }\n}\n\nexport default PinakionWrapper\n",
@@ -4256,7 +4152,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 172,
+    "__docId__": 167,
     "kind": "class",
     "name": "PinakionWrapper",
     "memberof": "src/contractWrappers/PinakionWrapper.js",
@@ -4274,7 +4170,7 @@
     ]
   },
   {
-    "__docId__": 173,
+    "__docId__": 168,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4309,7 +4205,7 @@
     ]
   },
   {
-    "__docId__": 174,
+    "__docId__": 169,
     "kind": "member",
     "name": "address",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4326,7 +4222,7 @@
     }
   },
   {
-    "__docId__": 175,
+    "__docId__": 170,
     "kind": "member",
     "name": "contractInstance",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4343,7 +4239,7 @@
     }
   },
   {
-    "__docId__": 176,
+    "__docId__": 171,
     "kind": "member",
     "name": "deploy",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4379,7 +4275,7 @@
     }
   },
   {
-    "__docId__": 178,
+    "__docId__": 173,
     "kind": "member",
     "name": "load",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4415,7 +4311,7 @@
     }
   },
   {
-    "__docId__": 181,
+    "__docId__": 176,
     "kind": "member",
     "name": "setKleros",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4471,7 +4367,7 @@
     }
   },
   {
-    "__docId__": 182,
+    "__docId__": 177,
     "kind": "member",
     "name": "transferOwnership",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4527,7 +4423,7 @@
     }
   },
   {
-    "__docId__": 183,
+    "__docId__": 178,
     "kind": "member",
     "name": "getData",
     "memberof": "src/contractWrappers/PinakionWrapper.js~PinakionWrapper",
@@ -4573,7 +4469,7 @@
     }
   },
   {
-    "__docId__": 184,
+    "__docId__": 179,
     "kind": "file",
     "name": "src/contractWrappers/mockDisputes.js",
     "content": "const disputes = [\n  {\n    title: 'Unknown website owner',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Category',\n    arbitrationFee: 1,\n    deadline: '28/1/2018',\n    caseId: '1',\n    parties: ['Party A', 'Party B'],\n    status: 'Vote',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  },\n  {\n    title: 'Uncomplete software product',\n    description: 'Giselle is an entrepreneur based on France. She contracts Miguel, a programmer from Guatemala, at a p2p freelancing platform to build a new website for her company. After they agree on a price, terms and conditions, Miguel gets to work. A couple of weeks later, he delivers the product. But Giselle is not satisfied. She argues that the quality of Miguel’s work is considerably lower than expected. Miguel replies that he did exactly what was in the agreement.',\n    category: 'Web, Ecommerce',\n    arbitrationFee: 0.5,\n    deadline: '28/1/2018',\n    caseId: '2',\n    parties: ['Miguel Lorem Ipsum', 'Giselle Bexter'],\n    status: 'Opportunity to appeal',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    },\n    {\n      name: 'Various',\n      description: 'short description',\n      downloadLink: ''\n    },\n    {\n      name: 'Website Drafts',\n      description: 'short description',\n      downloadLink: ''\n    },\n    {\n      name: 'Website Designs',\n      description: 'short description',\n      downloadLink: ''\n    },\n    {\n      name: 'Testimony',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Giselle',\n        description: 'This option transfers funds to Giselle.',\n        value: '0'\n      },\n      {\n        name: 'Give Miguel one extra week to finish the website',\n        description: 'This option blocks new disputes for one week and removes this option from further dispute.',\n        value: '1'\n      },\n      {\n        name: 'Pay Miguel',\n        description: 'This option transfers funds to Miguel address.',\n        value: '2'\n      }\n    ]\n  },\n  {\n    title: 'Unknown website owner',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Web, Ecommerce',\n    arbitrationFee: 0.1,\n    deadline: '10/9/2017',\n    caseId: '3',\n    parties: ['Party A', 'Party B'],\n    status: 'Execution',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  },\n  {\n    title: 'Stolen logo',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Category',\n    arbitrationFee: 0.3,\n    deadline: '28/1/2018',\n    caseId: '4',\n    parties: ['Party A', 'Party B'],\n    status: 'Execution',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  },\n  {\n    title: 'Unknown website owner',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Category',\n    arbitrationFee: 0.2,\n    deadline: '28/1/2018',\n    caseId: '5',\n    parties: ['Party A', 'Party B'],\n    status: 'Vote',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  },\n  {\n    title: 'Stolen logo',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Category',\n    arbitrationFee: 0.2,\n    deadline: '28/1/2018',\n    caseId: '6',\n    parties: ['Party A', 'Party B'],\n    status: 'Vote',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  },\n  {\n    title: 'Stolen logo',\n    description: 'Party A hired Party B to do task C. Party A thinks that Party B did not satisfy the terms of the contract',\n    category: 'Category',\n    arbitrationFee: 2,\n    deadline: '28/1/2018',\n    caseId: '7',\n    parties: ['Party A', 'Party B'],\n    status: 'Vote',\n    evidence: [{\n      name: 'Contract',\n      description: 'short description about evidence',\n      downloadLink: ''\n    }, {\n      name: 'Denial',\n      description: 'short description',\n      downloadLink: ''\n    }],\n    resolutionOptions: [\n      {\n        name: 'Reimburse Party A',\n        description: 'This option transfers funds to Party A.',\n        value: '0'\n      },\n      {\n        name: 'Pay Party B',\n        description: 'This option transfers funds to Party B address.',\n        value: '1'\n      }\n    ]\n  }\n]\n\nexport default disputes\n",
@@ -4584,7 +4480,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 185,
+    "__docId__": 180,
     "kind": "variable",
     "name": "disputes",
     "memberof": "src/contractWrappers/mockDisputes.js",
@@ -4604,7 +4500,7 @@
     }
   },
   {
-    "__docId__": 186,
+    "__docId__": 181,
     "kind": "file",
     "name": "src/index.js",
     "content": "import Kleros from './kleros.js'\nexport {Kleros}\n",
@@ -4615,7 +4511,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 187,
+    "__docId__": 182,
     "kind": "file",
     "name": "src/kleros.js",
     "content": "import Web3Wrapper from '../util/Web3Wrapper'\nimport StoreProviderWrapper from '../util/StoreProviderWrapper'\nimport KlerosWrapper from './contractWrappers/KlerosWrapper'\nimport ArbitrableTransactionWrapper from './contractWrappers/ArbitrableTransactionWrapper'\nimport PinakionWrapper from './contractWrappers/PinakionWrapper'\nimport BlockHashRNGWrapper from './contractWrappers/BlockHashRNGWrapper'\nimport DisputesApi from './abstractWrappers/Disputes'\nimport ArbitratorApi from './abstractWrappers/Arbitrator'\nimport ArbitrableContractApi from './abstractWrappers/ArbitrableContract'\nimport { LOCALHOST_STORE_PROVIDER, LOCALHOST_ETH_PROVIDER } from '../constants'\n\nclass Kleros {\n  _web3Wrapper = {}\n\n  _storeWrapper = {}\n\n  /**\n   * Instantiates a new Kelros instance that provides the public interface\n   * to Kleros contracts and library.\n   * @param {string} ethereumProvider The Web3.js Provider instance you would like the\n   *                 Kleros.js library to use for interacting with the\n   *                 Ethereum network.\n   * @param {string} storeProvider The storage provider instance used by the contract to\n   *                      get data from the cloud. e.g. Kleros-Store,\n   *                      IPFS, Swarm etc.\n   * @return {object} A n instance of the Kleros.js class.\n   */\n  constructor(\n    ethereumProvider = LOCALHOST_ETH_PROVIDER,\n    storeProvider = LOCALHOST_STORE_PROVIDER\n  ) {\n    this._web3Wrapper = new Web3Wrapper(ethereumProvider)\n    this._storeWrapper = new StoreProviderWrapper(storeProvider)\n    // low level contract api\n    this.klerosPOC = new KlerosWrapper(this._web3Wrapper)\n    this.arbitrableTransaction = new ArbitrableTransactionWrapper(this._web3Wrapper)\n    this.pinakion = new PinakionWrapper(this._web3Wrapper)\n    this.blockHashRng = new BlockHashRNGWrapper(this._web3Wrapper)\n    // abstracted api\n    // FIXME allow user to pass which court and arbitrable contract they are using\n    this.disputes = new DisputesApi(this._storeWrapper, this.klerosPOC, this.arbitrableTransaction)\n    this.arbitrator = new ArbitratorApi(this._storeWrapper, this.klerosPOC)\n    this.arbitrableContract = new ArbitrableContractApi(this._storeWrapper, this.arbitrableTransaction)\n  }\n\n  getWeb3Wrapper = () => this._web3Wrapper\n  getStoreWrapper = () => this._storeWrapper\n}\n\nexport default Kleros\n",
@@ -4626,7 +4522,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 188,
+    "__docId__": 183,
     "kind": "class",
     "name": "Kleros",
     "memberof": "src/kleros.js",
@@ -4642,7 +4538,7 @@
     "interface": false
   },
   {
-    "__docId__": 189,
+    "__docId__": 184,
     "kind": "member",
     "name": "_web3Wrapper",
     "memberof": "src/kleros.js~Kleros",
@@ -4659,7 +4555,7 @@
     }
   },
   {
-    "__docId__": 190,
+    "__docId__": 185,
     "kind": "member",
     "name": "_storeWrapper",
     "memberof": "src/kleros.js~Kleros",
@@ -4676,7 +4572,7 @@
     }
   },
   {
-    "__docId__": 191,
+    "__docId__": 186,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/kleros.js~Kleros",
@@ -4719,7 +4615,7 @@
     }
   },
   {
-    "__docId__": 194,
+    "__docId__": 189,
     "kind": "member",
     "name": "klerosPOC",
     "memberof": "src/kleros.js~Kleros",
@@ -4736,7 +4632,7 @@
     }
   },
   {
-    "__docId__": 195,
+    "__docId__": 190,
     "kind": "member",
     "name": "arbitrableTransaction",
     "memberof": "src/kleros.js~Kleros",
@@ -4753,7 +4649,7 @@
     }
   },
   {
-    "__docId__": 196,
+    "__docId__": 191,
     "kind": "member",
     "name": "pinakion",
     "memberof": "src/kleros.js~Kleros",
@@ -4770,7 +4666,7 @@
     }
   },
   {
-    "__docId__": 197,
+    "__docId__": 192,
     "kind": "member",
     "name": "blockHashRng",
     "memberof": "src/kleros.js~Kleros",
@@ -4787,7 +4683,7 @@
     }
   },
   {
-    "__docId__": 198,
+    "__docId__": 193,
     "kind": "member",
     "name": "disputes",
     "memberof": "src/kleros.js~Kleros",
@@ -4804,7 +4700,7 @@
     }
   },
   {
-    "__docId__": 199,
+    "__docId__": 194,
     "kind": "member",
     "name": "arbitrator",
     "memberof": "src/kleros.js~Kleros",
@@ -4821,7 +4717,7 @@
     }
   },
   {
-    "__docId__": 200,
+    "__docId__": 195,
     "kind": "member",
     "name": "arbitrableContract",
     "memberof": "src/kleros.js~Kleros",
@@ -4838,7 +4734,7 @@
     }
   },
   {
-    "__docId__": 201,
+    "__docId__": 196,
     "kind": "member",
     "name": "getWeb3Wrapper",
     "memberof": "src/kleros.js~Kleros",
@@ -4855,7 +4751,7 @@
     }
   },
   {
-    "__docId__": 202,
+    "__docId__": 197,
     "kind": "member",
     "name": "getStoreWrapper",
     "memberof": "src/kleros.js~Kleros",
