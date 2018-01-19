@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">src/abstractWrappers/ArbitrableContract.js | kleros-api</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Kleros API"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="kleros-api"><meta property="twitter:description" content="Kleros API"></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/kleros/kleros-api.git"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/kleros.js~Kleros.html">Kleros</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#abstractwrappers">abstractWrappers</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/abstractWrappers/AbstractWrapper.js~AbstractWrapper.html">AbstractWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/abstractWrappers/ArbitrableContract.js~ArbitrableContract.html">ArbitrableContract</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/abstractWrappers/Arbitrator.js~Arbitrator.html">Arbitrator</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/abstractWrappers/Disputes.js~Disputes.html">Disputes</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#contractwrappers">contractWrappers</a><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/ArbitrableTransactionWrapper.js~ArbitrableTransactionWrapper.html">ArbitrableTransactionWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/BlockHashRNGWrapper.js~BlockHashRNGWrapper.html">BlockHashRNGWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/CentralizedArbitratorWrapper.js~CentralizedArbitratorWrapper.html">CentralizedArbitratorWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/ContractWrapper.js~ContractWrapper.html">ContractWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/KlerosWrapper.js~KlerosWrapper.html">KlerosWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/contractWrappers/PinakionWrapper.js~PinakionWrapper.html">PinakionWrapper</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-disputes">disputes</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/abstractWrappers/ArbitrableContract.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import AbstractWrapper from &apos;./AbstractWrapper&apos;
+import {
+  DEFAULT_ARBITRATION_COST,
+  DISPUTE_STATUS
+} from &apos;../../constants&apos;
+
+/**
+ * Arbitrable Contract api
+ */
+class ArbitrableContract extends AbstractWrapper {
+  /**
+   * Arbitrable Contract Constructor
+   * @param {object} storeProvider store provider object
+   * @param {object} arbitrableWrapper arbitrable contract wrapper object
+   */
+  constructor(storeProvider, arbitrableWrapper) {
+    super(storeProvider, undefined, arbitrableWrapper)
+  }
+
+  /**
+  * Deploy a contract and add to the Store
+  * @param {string} account Ethereum address
+  * @param {int} value funds to be placed in contract
+  * @param {string} hashContract Keccak hash of the plain English contract
+  * @param {string} arbitratorAddress The address of the arbitrator contract
+  * @param {int} timeout Time after which a party automatically loose a dispute
+  * @param {string} partyB Ethereum address of the other party in the contract
+  * @param {bytes} arbitratorExtraData Extra data for the arbitrator
+  * @param {string} email Email address of the contract creator (default empty string)
+  * @param {string} description Description of what the contract is about (default empty string)
+  * @param args Extra arguments for the contract
+  * @return object | Error
+  */
+  deployContract = async (
+    account,
+    value,
+    hashContract,
+    arbitratorAddress,
+    timeout,
+    partyB,
+    arbitratorExtraData = &apos;&apos;,
+    email = &apos;&apos;,
+    description = &apos;&apos;,
+    ...args
+  ) =&gt; {
+    this._checkArbitrableWrappersSet()
+
+    const contractInstance = await this._ArbitrableContract.deploy(
+      account,
+      value,
+      hashContract,
+      arbitratorAddress,
+      timeout,
+      partyB,
+      arbitratorExtraData,
+      ...args
+    )
+
+    await this._StoreProvider.updateContract(
+      contractInstance.address,
+      hashContract,
+      account,
+      partyB,
+      arbitratorAddress,
+      timeout,
+      email,
+      description
+    )
+
+    // return contract data
+    return await this.getData(contractInstance.address, account)
+  }
+
+  /**
+   * Submit evidence
+   * @param {string} account ETH address of user
+   * @param {string} contractAddress ETH address of contract
+   * @param {string} name name of evidence
+   * @param {string} description description of evidence
+   * @param {string} evidence A link to an evidence using its URI.
+   * @return {string} txHash Hash transaction
+   */
+  submitEvidence = async (
+    account,
+    contractAddress,
+    name,
+    description = &apos;&apos;,
+    url
+  ) =&gt; {
+    const txHash = await this._ArbitrableContract.submitEvidence(
+      account,
+      contractAddress,
+      name,
+      description,
+      url
+    )
+
+    await this._StoreProvider.addEvidenceContract(
+      contractAddress,
+      account,
+      name,
+      description,
+      url
+    )
+
+    return txHash
+  }
+
+  /**
+  * Get ruling options from dispute via event
+  * @param {string} contractAddress
+  * @returns {object[]} an array of objects that specify the name and value of the resolution option
+  */
+  getRulingOptions = async (
+    contractAddress
+  )  =&gt; {
+    const contractInstance = await this._loadArbitrableInstance(contractAddress)
+
+    // fetch dispute resolution options
+    const statusNumber = (await contractInstance.status()).toNumber()
+
+    // should this just be !== ?
+    if (statusNumber &lt; DISPUTE_STATUS) return []
+
+    // FIXME we should have a block number to start from so we don&apos;t have to rip through the entire chain
+    const disputeEvent = await new Promise((resolve, reject) =&gt; {
+      contractInstance.Dispute({}, {fromBlock: 0, toBlock: &apos;latest&apos;}).get((error, eventResult) =&gt; {
+        if (error) reject(error)
+        // this should be ok because there should only be 1 Dispute event per contract
+        resolve(eventResult[0])
+      })
+    })
+
+    if (!disputeEvent) return []
+
+    // FIXME there should only be one create dispute event per contract for now. allow abstract number
+    const rulingOptions = disputeEvent.args._rulingOptions.split(&apos;;&apos;)
+    let optionIndex = 0
+    const resolutionOptions = rulingOptions.map(option =&gt; {
+      optionIndex += 1
+      return {
+        name: option,
+        value: optionIndex
+      }
+    })
+
+    return resolutionOptions
+  }
+
+  getArbitrator = async (
+    arbitrableContractAddress
+  ) =&gt; {
+    const contractInstance = await this._loadArbitrableInstance(arbitrableContractAddress)
+
+    return await contractInstance.arbitrator()
+  }
+
+  /**
+  * Get data from the store and contract for Arbitrable Contract
+  * @param {string} contractAddress address of Arbitrable Contract
+  * @param {string} account ETH address of user
+  * @return {object} contract data
+  */
+  getData = async (
+    contractAddress,
+    account
+  ) =&gt; {
+    const contractData = await this._ArbitrableContract.getData(contractAddress)
+
+    let storeData = {}
+    if (account) storeData = await this._StoreProvider.getContractByAddress(account, contractAddress)
+
+    return Object.assign({}, storeData, contractData)
+  }
+}
+
+export default ArbitrableContract
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
