@@ -95,8 +95,8 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
    * @return {string} txHash hash transaction | Error
    */
    pay = async (
-     account = this._Web3Wrapper.getAccount(0),
-     contractAddress // ethereum address of the contract
+     contractAddress, // ethereum address of the contract
+     account = this._Web3Wrapper.getAccount(0)
    ) => {
      try {
        this.contractInstance = await this.load(contractAddress)
@@ -116,15 +116,41 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
    }
 
   /**
+  * Pay the party B. To be called when the good is delivered or the service rendered.
+  * @param {string} account Ethereum account (default account[0])
+  * @return {string} txHash hash transaction | Error
+  */
+  reimburse = async (
+    contractAddress, // ethereum address of the contract
+    account = this._Web3Wrapper.getAccount(0),
+  ) => {
+    try {
+      this.contractInstance = await this.load(contractAddress)
+      const txHashObj = await this.contractInstance
+        .pay(
+        {
+          from: account,
+          gas: config.GAS,
+          value: 0,
+        }
+      )
+
+      return txHashObj.tx
+    } catch (e) {
+      throw new Error(e)
+    }
+  }
+
+  /**
    * Pay the arbitration fee to raise a dispute. To be called by the party A.
    * @param {string} account Ethereum account (default account[0])
    * @param {number} arbitrationCost Amount to pay the arbitrator. (default 10000 wei)
    * @return {string} txHash hash transaction | Error
    */
    payArbitrationFeeByPartyA = async (
-     account = this._Web3Wrapper.getAccount(0),
      contractAddress, // ethereum address of the contract
      arbitrationCost = 0.15,
+     account = this._Web3Wrapper.getAccount(0)
    ) => {
      try {
        this.contractInstance = await this.load(contractAddress)
@@ -150,9 +176,9 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
    * @return {string} txHash hash transaction | Error
    */
    payArbitrationFeeByPartyB = async (
-     account = this._Web3Wrapper.getAccount(1),
      contractAddress, // ethereum address of the contract
-     arbitrationCost = 0.15
+     arbitrationCost = 0.15,
+     account = this._Web3Wrapper.getAccount(1)
    ) => {
      try {
        this.contractInstance = await this.load(contractAddress)
@@ -181,11 +207,11 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
   * @return {string} txHash Hash transaction
    */
   submitEvidence = async (
-    account = this._Web3Wrapper.getAccount(0),
     contractAddress,
     name,
     description = '',
-    url
+    url,
+    account = this._Web3Wrapper.getAccount(0)
   ) => {
     this.contractInstance = await this.load(contractAddress)
     const txHashObj = await this.contractInstance
@@ -212,8 +238,8 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
   * @return {string} txHash Hash transaction
    */
   callTimeOutPartyA = async (
-    account = this._Web3Wrapper.getAccount(0),
-    contractAddress
+    contractAddress,
+    account = this._Web3Wrapper.getAccount(0)
   ) => {
     try {
       this.contractInstance = await this.load(contractAddress)
@@ -252,8 +278,8 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
   * @return {string} txHash Hash transaction
    */
   callTimeOutPartyB = async (
-    account = this._Web3Wrapper.getAccount(0),
-    contractAddress
+    contractAddress,
+    account = this._Web3Wrapper.getAccount(0)
   ) => {
     try {
       this.contractInstance = await this.load(contractAddress)
@@ -343,9 +369,9 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
   * @return {object} Object Data of the contract.
   */
   getData = async (
-    address
+    account
   ) => {
-    const contractInstance = await this.load(address)
+    const contractInstance = await this.load(account)
 
     const [
       arbitrator,
@@ -380,7 +406,7 @@ class ArbitrableTransactionWrapper extends ContractWrapper {
       })
 
     return {
-      address,
+      account,
       arbitrator,
       extraData,
       address,

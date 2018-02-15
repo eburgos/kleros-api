@@ -439,7 +439,7 @@ class KlerosWrapper extends ContractWrapper {
   */
   currentRulingForDispute = async (
     contractAddress,
-    disputeId,
+    disputeId
   ) => {
     const contractInstance = await this.load(contractAddress)
 

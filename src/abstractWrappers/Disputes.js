@@ -77,17 +77,17 @@ class Disputes extends AbstractWrapper {
   * @return {string} txHash hash transaction | Error
   */
   raiseDisputePartyA = async (
-    account,
     arbitrableContractAddress,
-    arbitrationCost = DEFAULT_ARBITRATION_COST
+    arbitrationCost = DEFAULT_ARBITRATION_COST,
+    account
   ) => {
     this._checkArbitrableWrappersSet()
 
     try {
       const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyA(
-        account,
         arbitrableContractAddress,
-        arbitrationCost
+        arbitrationCost,
+        account
       )
 
       if (!txHash) throw new Error('unable to pay arbitration fee for party A')
@@ -106,16 +106,16 @@ class Disputes extends AbstractWrapper {
   * @return {string} txHash hash of the transaction | Error
   */
   raiseDisputePartyB = async (
-    account,
     arbitrableContractAddress,
-    arbitrationCost = DEFAULT_ARBITRATION_COST
+    arbitrationCost = DEFAULT_ARBITRATION_COST,
+    account
   ) => {
     this._checkArbitrableWrappersSet()
 
     const txHash = await this._ArbitrableContract.payArbitrationFeeByPartyB(
-      account,
       arbitrableContractAddress,
-      arbitrationCost
+      arbitrationCost,
+      account
     )
 
     if (!txHash) throw new Error('unable to pay arbitration fee for party B')

@@ -47,12 +47,12 @@ class BlockHashRNGWrapper extends ContractWrapper {
    * @return {object} Conract Instance | Error
    */
   load = async (
-    address
+    account
   ) => {
     try {
-      const contractInstance = await this._instantiateContractIfExistsAsync(RNG, address)
+      const contractInstance = await this._instantiateContractIfExistsAsync(RNG, account)
       this.contractInstance = contractInstance
-      this.address = address
+      this.address = account
       return contractInstance
     } catch (e) {
       throw new Error(e)

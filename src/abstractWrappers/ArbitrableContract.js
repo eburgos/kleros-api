@@ -82,18 +82,18 @@ class ArbitrableContract extends AbstractWrapper {
    * @return {string} txHash Hash transaction
    */
   submitEvidence = async (
-    account,
     contractAddress,
     name,
     description = '',
-    url
+    url,
+    account
   ) => {
     const txHash = await this._ArbitrableContract.submitEvidence(
-      account,
       contractAddress,
       name,
       description,
-      url
+      url,
+      account
     )
 
     await this._StoreProvider.addEvidenceContract(
